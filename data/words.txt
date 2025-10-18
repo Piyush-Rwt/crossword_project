@@ -1,0 +1,470 @@
+APPLE,A common fruit
+BAKER,Someone who who bakes bread
+CANDY,A sweet treat
+DREAM,Something you experience while sleeping
+EAGLE,A large bird of prey
+FANCY,Elaborate or decorative
+GRAPE,A small, round fruit
+HAPPY,Feeling or showing pleasure or contentment
+IDEAL,Perfect; the best possible
+JUMPY,Nervous or easily startled
+KITES,Toys flown on a string
+LEMON,A yellow citrus fruit
+MAGIC,The power of apparently influencing events by supernatural means
+NIGHT,The period of darkness in each twenty-four hours
+OCEAN,A very large expanse of sea
+PEACE,Freedom from disturbance; tranquility
+QUEEN,The female ruler of an independent state
+RIVER,A large natural stream of water
+SUNNY,Bright with sunlight
+TIGER,A large solitary cat with a yellow-brown coat striped with black
+UNITY,The state of being united or joined as a whole
+VIVID,Producing powerful feelings or strong, clear images in the mind
+WATER,A colorless, transparent, odorless liquid
+XENON,A chemical element, a noble gas
+YACHT,A sailing or power vessel used for pleasure cruises or racing
+ZEBRA,An African wild horse with black-and-white stripes
+ABOVE,At a higher level than
+BELOW,At a lower level than
+CRANE,A large, tall bird with long legs and a long neck
+DAISY,A small European grassland plant
+EARTH,The planet on which we live
+FROGS,Amphibious tailless amphibians
+GIANT,An imaginary being of human form but superhuman size
+HOUSE,A building for human habitation
+INBOX,An electronic folder for incoming messages
+JOKER,A person who likes to tell jokes
+KNEEL,To go down on one's knee or knees
+LIGHT,The natural agent that stimulates sight
+MOUNT,A mountain or hill
+NORTH,The direction toward the point of the horizon directly opposite south
+OASIS,A fertile spot in a desert
+PLANT,A living organism of the kind exemplified by trees, shrubs, herbs, grasses, ferns, and mosses
+QUICK,Moving or doing something with great speed
+ROBOT,A machine capable of carrying out a complex series of actions automatically
+SHINE,A quality of brightness
+TABLE,A piece of furniture with a flat top and one or more legs
+UNDER,Extending or directly below
+VOWEL,A speech sound produced by open vocal tract
+WAGON,A vehicle used for transporting goods or another specified purpose
+YIELD,Produce or provide (a natural, agricultural, or industrial product)
+ZONES,Areas or regions
+ACE,Expert
+ACT,Play a part
+ADD,Sum up
+AGE,Grow old
+AIR,What we breathe
+ALL,Every bit
+AND,Plus
+ANT,Small insect
+APE,Mimic
+ARC,Curve
+ARE,To be
+ARM,Body limb
+ART,Creative work
+ASH,Fire residue
+ASK,Inquire
+AWE,Wonder
+AXE,Chopping tool
+BAD,Not good
+BAG,Sack
+BAR,Pub
+BAT,Flying mammal
+BED,Place to sleep
+BEE,Pollinator
+BIG,Large
+BIT,Small piece
+BOX,Container
+BUG,Insect
+BUS,Public transport
+BUY,Purchase
+CAB,Taxi
+CAN,Be able to
+CAP,Hat
+CAR,Automobile
+CAT,Feline pet
+COB,Corn on the ___
+COD,Fish type
+COT,Small bed
+COW,Farm animal
+CRY,Weep
+CUB,Young bear
+CUP,Drinking vessel
+CUT,Sever
+DAD,Father
+DAY,24 hours
+DEN,Animal's home
+DIE,Game cube
+DIG,Excavate
+DOG,Canine pet
+DRY,Not wet
+DUE,Owed
+EAR,Hearing organ
+EAT,Consume food
+EGG,Oval food
+ELF,Mythical creature
+END,Finish
+ERA,Period of time
+EVE,Night before
+EYE,Seeing organ
+FAN,Cooling device
+FAR,Distant
+FAT,Adipose tissue
+FEW,Not many
+FIG,Sweet fruit
+FIN,Fish part
+FIT,Healthy
+FIX,Repair
+FLY,Insect
+FOG,Mist
+FOR,In favor of
+FUN,Enjoyment
+FUR,Animal coat
+GAP,Opening
+GAS,Fuel
+GEM,Precious stone
+GET,Obtain
+GUM,Chewing candy
+GUN,Weapon
+GUY,Man
+HAD,Possessed
+HAS,Possesses
+HAT,Headwear
+HEN,Female chicken
+HER,Female pronoun
+HIM,Male pronoun
+HIP,Body joint
+HIS,Belonging to him
+HIT,Strike
+HOG,Pig
+HOT,High temperature
+HOW,In what way
+HUG,Embrace
+HUT,Small dwelling
+ICE,Frozen water
+INK,Pen fluid
+JAB,Quick punch
+JAM,Fruit spread
+JAR,Container
+JET,Fast plane
+JOG,Run slowly
+JOY,Happiness
+JUG,Pitcher
+KEY,Lock opener
+KID,Young goat
+KIN,Family
+KIT,Set of tools
+LAB,Science room
+LAD,Boy
+LAP,Circuit
+LAW,Rule
+LAY,Place down
+LED,Light-emitting diode
+LEG,Body limb
+LET,Allow
+LIE,Untruth
+LIP,Mouth part
+LIT,Illuminated
+LOG,Tree trunk
+LOT,Many
+LOW,Not high
+MAD,Angry
+MAN,Adult male
+MAP,Guide
+MAT,Floor covering
+MAX,Maximum
+MAY,Spring month
+MEN,Adult males
+MET,Encountered
+MOM,Mother
+MOP,Cleaning tool
+MUD,Wet earth
+NET,Fishing gear
+NEW,Not old
+NIL,Zero
+NIP,Pinch
+NOD,Head gesture
+NOR,Neither ___
+NOT,Negative
+NOW,At this moment
+NUN,Religious woman
+NUT,Edible seed
+OAK,Tree type
+OAR,Rowing tool
+OIL,Lubricant
+OLD,Aged
+ONE,Single
+OWL,Nocturnal bird
+OWN,Possess
+PAD,Cushion
+PAL,Friend
+PAN,Cooking vessel
+PAR,Golf standard
+PAT,Gentle tap
+PAW,Animal foot
+PAY,Give money
+PEA,Small green vegetable
+PEN,Writing tool
+PET,Domestic animal
+PIE,Baked dessert
+PIG,Farm animal
+PIN,Fastener
+PIT,Hole
+PLY,Layer
+POD,Seed case
+POP,Burst
+POT,Container
+PRO,Professional
+PUB,Bar
+PUP,Young dog
+PUT,Place
+RAG,Old cloth
+RAM,Male sheep
+RAN,Did run
+RAT,Rodent
+RAW,Uncooked
+RED,Primary color
+RIB,Bone
+RID,Free of
+RIM,Edge
+ROB,Steal
+ROD,Stick
+ROW,Line
+RUB,Friction
+RUG,Carpet
+RUN,Jog
+SAD,Unhappy
+SAG,Droop
+SAP,Tree fluid
+SAT,Did sit
+SAW,Cutting tool
+SEA,Ocean
+SEE,Observe
+SET,Group
+SHE,Female pronoun
+SHY,Bashful
+SIP,Small drink
+SIR,Polite address
+SIT,Be seated
+SIX,Number after five
+SKY,Above us
+SLY,Cunning
+SOW,Plant seeds
+SUN,Star
+TAB,Index
+TAG,Label
+TAN,Sun-kissed color
+TAP,Faucet
+TAR,Black goo
+TEA,Hot drink
+TEN,Number
+THE,Definite article
+TIE,Neckwear
+TIN,Metal
+TIP,Gratuity
+TOE,Foot digit
+TOP,Summit
+TOY,Plaything
+TRY,Attempt
+TUB,Bathtub
+TUG,Pull
+TWO,Number
+USE,Employ
+VAN,Vehicle
+VET,Animal doctor
+VIA,By way of
+WAG,Tail motion
+WAR,Conflict
+WAS,Existed
+WAY,Path
+WEB,Spider's creation
+WED,Marry
+WET,Not dry
+WHO,Question word
+WHY,Reason
+WIN,Triumph
+WIP,Work in progress
+WIT,Cleverness
+WON,Achieved victory
+WOO,Court
+YES,Affirmative
+YET,Still
+YOU,Second person pronoun
+ZIP,Fastener
+ZOO,Animal park
+AREA,Region
+ATOM,Smallest particle
+AXLE,Wheel rod
+BIRD,Feathered creature
+BOOK,Something to read
+CAKE,Birthday treat
+COAT,Outer garment
+DICE,Game cubes
+DOOR,Entry point
+EDIT,Make changes to
+EXIT,Way out
+FISH,Aquatic animal
+GAME,Play activity
+GATE,Fence opening
+HOME,Dwelling place
+IRON,Metal element
+JAZZ,Music genre
+KITE,Flying toy
+LION,Big cat
+LUCK,Good fortune
+MASK,Face covering
+MILK,Dairy drink
+NEST,Bird's home
+NOTE,Short message
+OVEN,Kitchen appliance
+PAGE,Book leaf
+PAIR,Two of a kind
+RAIN,Precipitation
+ROSE,Thorny flower
+SALT,Seasoning
+SHIP,Large boat
+STAR,Celestial body
+TENT,Camping shelter
+TIME,What a clock tells
+TREE,Woody plant
+WAVE,Ocean motion
+WIND,Moving air
+YARD,Lawn
+ZERO,Nothing
+ZINC,Metallic element
+
+COMPUTER,An electronic device for storing and processing data
+KEYBOARD,A panel of keys for operating a computer
+MONITOR,A screen used for displaying output from a computer
+SOFTWARE,The programs and other operating information used by a computer
+HARDWARE,The physical parts of a computer
+INTERNET,A global computer network providing a variety of information
+PYTHON,A popular high-level programming language
+JAVASCRIPT,A programming language of the Web
+DATABASE,A structured set of data held in a computer
+ALGORITHM,A process or set of rules to be followed in calculations
+VARIABLE,A data item that may take on more than one value
+CONSTANT,A value that does not change
+FUNCTION,A block of code that performs a specific task
+PARAMETER,A special kind of variable, used in a function to refer to one of the pieces of data provided as input
+ARGUMENT,A value passed to a function when it is called
+LIBRARY,A collection of pre-compiled routines that a program can use
+FRAMEWORK,A basic structure underlying a system, concept, or text
+COMPILER,A program that converts instructions into a machine-code or lower-level form
+INTERPRETER,A program that directly executes instructions written in a programming or scripting language
+DEBUGGING,The process of finding and resolving defects or problems within a computer program
+SYNTAX,The set of rules that defines the combinations of symbols that are considered to be correctly structured
+SEMANTICS,The meaning of a word, phrase, sentence, or text
+NETWORK,A group or system of interconnected people or things
+PROTOCOL,A set of rules governing the exchange or transmission of data between devices
+SERVER,A computer or computer program that manages access to a centralized resource or service in a network
+CLIENT,A desktop computer or workstation that is capable of obtaining information and applications from a server
+ROUTER,A device that forwards data packets between computer networks
+SWITCH,A device for making and breaking the connection in an electric circuit
+FIREWALL,A network security system that monitors and controls incoming and outgoing network traffic
+ENCRYPTION,The process of converting information or data into a code, especially to prevent unauthorized access
+DECRYPTION,The process of converting encoded or encrypted data into a readable form
+AUTHENTICATION,The process of verifying the identity of a user or process
+AUTHORIZATION,The function of specifying access rights/privileges to resources
+BACKUP,A copy of a file or other item of data made in case the original is lost or damaged
+RESTORE,To bring back a file or other item of data from a backup
+CLOUD,A network of servers, and each server has a different function
+VIRTUALIZATION,The act of creating a virtual version of something, including virtual computer hardware platforms, storage devices, and computer network resources
+CONTAINER,A standard unit of software that packages up code and all its dependencies
+DOCKER,A set of platform as a service products that use OS-level virtualization to deliver software in packages called containers
+KUBERNETES,An open-source container-orchestration system for automating computer application deployment, scaling, and management
+LINUX,An open-source operating system
+WINDOWS,A group of several proprietary graphical operating system families, all of which are developed and marketed by Microsoft
+MACOS,A series of proprietary graphical operating systems developed and marketed by Apple Inc.
+ANDROID,A mobile operating system based on a modified version of the Linux kernel and other open source software
+IOS,A mobile operating system created and developed by Apple Inc. exclusively for its hardware
+MOBILE,Relating to cell phones, tablets, and other portable devices
+DESKTOP,A personal computer designed for regular use at a single location
+LAPTOP,A computer that is portable and suitable for use while traveling
+TABLET,A portable computer that uses a touchscreen as its primary input device
+SMARTPHONE,A cellular telephone with an integrated computer and other features not originally associated with telephones
+GEOGRAPHY,The study of the physical features of the earth
+HISTORY,The study of past events
+MATHEMATICS,The abstract science of number, quantity, and space
+SCIENCE,The intellectual and practical activity encompassing the systematic study of the structure and behaviour of the physical and natural world
+LITERATURE,Written works, especially those considered of superior or lasting artistic merit
+PHILOSOPHY,The study of the fundamental nature of knowledge, reality, and existence
+PSYCHOLOGY,The scientific study of the human mind and its functions
+SOCIOLOGY,The study of the development, structure, and functioning of human society
+ECONOMICS,The branch of knowledge concerned with the production, consumption, and transfer of wealth
+POLITICS,The activities associated with the governance of a country or other area
+ART,The expression or application of human creative skill and imagination
+MUSIC,Vocal or instrumental sounds combined in such a way as to produce beauty of form, harmony, and expression of emotion
+THEATER,A building or outdoor area in which plays and other dramatic performances are given
+CINEMA,A theatre where films are shown for public entertainment
+SPORTS,An activity involving physical exertion and skill in which an individual or team competes against another or others for entertainment
+GAMES,A form of play or sport, especially a competitive one played according to rules and decided by skill, strength, or luck
+FOOD,Any nutritious substance that people or animals eat or drink
+DRINK,A liquid that can be swallowed as refreshment or nourishment
+NATURE,The phenomena of the physical world collectively, including plants, animals, the landscape, and other features and products of the earth
+ANIMALS,Living organisms that feed on organic matter, typically having specialized sense organs and nervous system and able to respond rapidly to stimuli
+PLANTS,Living organisms of the kind exemplified by trees, shrubs, herbs, grasses, ferns, and mosses
+WEATHER,The state of the atmosphere at a particular place and time as regards heat, cloudiness, dryness, sunshine, wind, rain, etc.
+CLIMATE,The weather conditions prevailing in an area in general or over a long period
+ASTRONOMY,The branch of science which deals with celestial objects, space, and the physical universe as a whole
+BIOLOGY,The study of living organisms
+CHEMISTRY,The branch of science concerned with the substances of which matter is composed
+PHYSICS,The branch of science concerned with the nature and properties of matter and energy
+GEOLOGY,The science which deals with the earth's physical structure and substance, its history, and the processes which act on it
+ECOLOGY,The branch of biology that deals with the relations of organisms to one another and to their physical surroundings
+GENETICS,The study of heredity and the variation of inherited characteristics
+EVOLUTION,The process by which different kinds of living organism are believed to have developed from earlier forms during the history of the earth
+GRAVITY,The force that attracts a body towards the centre of the earth, or towards any other physical body having mass
+ELECTRICITY,A form of energy resulting from the existence of charged particles
+MAGNETISM,A physical phenomenon produced by the motion of electric charge, resulting in attractive and repulsive forces between objects
+LIGHT,The natural agent that stimulates sight and makes things visible
+SOUND,Vibrations that travel through the air or another medium and can be heard when they reach a person's or animal's ear
+ENERGY,The strength and vitality required for sustained physical or mental activity
+MATTER,Physical substance in general, as distinct from mind and spirit
+ATOM,The basic unit of a chemical element
+MOLECULE,A group of atoms bonded together, representing the smallest fundamental unit of a chemical compound
+ELEMENT,Each of more than one hundred substances that cannot be chemically interconverted or broken down into simpler substances
+COMPOUND,A thing that is composed of two or more separate elements
+MIXTURE,A substance made by mixing other substances together
+SOLUTION,A liquid mixture in which the minor component (the solute) is uniformly distributed within the major component (the solvent)
+SOLID,Firm and stable in shape; not liquid or fluid
+LIQUID,A substance that flows freely but is of constant volume, having a consistency like that of water or oil
+GAS,An air-like fluid substance which expands freely to fill any space available, irrespective of its quantity
+PLASMA,An ionized gas consisting of positive ions and free electrons in proportions resulting in more or less no overall electric charge
+TEMPERATURE,The degree or intensity of heat present in a substance or object
+PRESSURE,Continuous physical force exerted on or against an object by something in contact with it
+VOLUME,The amount of space that a substance or object occupies
+DENSITY,The degree of compactness of a substance
+MASS,The quantity of matter which a body contains
+WEIGHT,A body's relative mass or the quantity of matter contained by it
+FORCE,Strength or energy as an attribute of physical action or movement
+VELOCITY,The speed of something in a given direction
+ACCELERATION,A vehicle's capacity to gain speed within a short time
+MOMENTUM,The quantity of motion of a moving body
+FRICTION,The resistance that one surface or object encounters when moving over another
+INERTIA,A property of matter by which it continues in its existing state of rest or uniform motion in a straight line
+WORK,Activity involving mental or physical effort done in order to achieve a purpose or result
+POWER,The ability to do something or act in a particular way
+KINETIC,Relating to or resulting from motion
+POTENTIAL,Having or showing the capacity to become or develop into something in the future
+CONSERVATION,The protection of animals, plants, and natural resources
+THERMODYNAMICS,The branch of physical science that deals with the relations between heat and other forms of energy
+QUANTUM,A discrete quantity of energy proportional in magnitude to the frequency of the radiation it represents
+RELATIVITY,The absence of standards of absolute and universal application
+MECHANICS,The branch of applied mathematics dealing with motion and forces producing motion
+OPTICS,The scientific study of sight and the behaviour of light
+ACOUSTICS,The properties or qualities of a room or building that determine how sound is transmitted in it
+STATISTICS,The practice or science of collecting and analysing numerical data in large quantities
+PROBABILITY,The extent to which an event is likely to occur
+CALCULUS,The branch of mathematics that deals with the finding and properties of derivatives and integrals of functions
+ALGEBRA,The part of mathematics in which letters and other general symbols are used to represent numbers and quantities in formulae and equations
+GEOMETRY,The branch of mathematics concerned with the properties of space
+TRIGONOMETRY,The branch of mathematics dealing with the relations of the sides and angles of triangles and with the relevant functions of any angles
+NUMBER,An arithmetical value, expressed by a word, symbol, or figure
+INTEGER,A whole number
+FRACTION,A numerical quantity that is not a whole number
+DECIMAL,Relating to or denoting a system of numbers and arithmetic based on the number ten, tenth parts, and powers of ten
+PERCENTAGE,A rate, number, or amount in each hundred
+RATIO,The quantitative relation between two amounts showing the number of times one value contains or is contained within the other
+PROPORTION,A part, share, or number considered in comparative relation to a whole
+EQUATION,A statement that the values of two mathematical expressions are equal

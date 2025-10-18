@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play Crossword</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Crossword Game</h1>
+        <div id="player-input-section">
+            <label for="player-name">Enter your name (max 10 chars):</label>
+            <input type="text" id="player-name" maxlength="10" placeholder="Your Name">
+            <button id="join-game-btn" class="btn">Join Game</button>
+        </div>
+
+        <div id="game-section" style="display: none;">
+            <div id="timer">00:00</div>
+            <div id="crossword-grid"></div>
+            <div class="clues-container">
+                <div class="clues-column">
+                    <h2>Across</h2>
+                    <ul id="across-clues"></ul>
+                </div>
+                <div class="clues-column">
+                    <h2>Down</h2>
+                    <ul id="down-clues"></ul>
+                </div>
+            </div>
+            <button id="submit-btn" class="btn">Submit Answers</button>
+            <button id="show-answers-btn" class="btn btn-secondary">Show Answers</button>
+            <button id="end-game" class="btn">End Game</button>
+        </div>
+        <a href="index.html" class="btn btn-secondary">Back to Home</a>
+    </div>
+
+    <script src="js/crossword.js"></script>
+</body>
+</html>
