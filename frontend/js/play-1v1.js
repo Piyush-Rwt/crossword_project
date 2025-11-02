@@ -125,6 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`Game finished. Score: ${score}, Time: ${timeTaken}s. Notifying server.`);
         yourFinalResultsEl.textContent = `You finished with a score of ${score} in ${timeTaken} seconds.`;
         socket.emit('player-finished', { gameId, score, timeTaken });
+
+        setTimeout(() => {
+            window.location.href = '/results-1v1.html';
+        }, 200); // Small delay to ensure event is sent
     }
 
     finishGameBtn.addEventListener('click', endGame);
@@ -156,7 +160,10 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         sessionStorage.setItem('1v1-results', JSON.stringify(results));
         sessionStorage.setItem('mySocketId', socket.id); // Store current player's socket ID
-        window.location.href = '/results-1v1.html';
+        
+        setTimeout(() => {
+            window.location.href = '/results-1v1.html';
+        }, 200); // Small delay to ensure event is sent
     });
 
     forfeitBtn.addEventListener('click', () => {
@@ -170,7 +177,10 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             sessionStorage.setItem('1v1-results', JSON.stringify(results));
             sessionStorage.setItem('mySocketId', socket.id); // Store current player's socket ID
-            window.location.href = '/results-1v1.html';
+            
+            setTimeout(() => {
+                window.location.href = '/results-1v1.html';
+            }, 200); // Small delay to ensure event is sent
         }
     });
 
