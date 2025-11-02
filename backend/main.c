@@ -30,6 +30,7 @@ Word words[MAX_WORDS];
 int numWords = 0;
 int currentWordId = 1; // Auto-incrementing ID for words
 int currentClueNumber = 1; // Auto-incrementing for clue numbering
+int active_grid_size = MAX_GRID_SIZE; // Use this for loops to allow dynamic grid sizes
 
 // Function prototypes
 void initializeGrid();
@@ -49,26 +50,45 @@ bool generateStaticCrossword();
 int main(int argc, char *argv[]) {
     srand(time(NULL)); // Seed for randomization
 
-    if (argc > 1 && strcmp(argv[1], "generate") == 0) {
+    if (argc > 1 && strcmp(argv[1], "generate-5x5") == 0) {
+        active_grid_size = 5; // Set grid size for 1v1 mode
         int attempts = 0;
-        bool success = false;
-        while (attempts < 10 && !success) {
-            #ifdef DEBUG
-            fprintf(stderr, "Generation attempt %d...\n", attempts + 1);
-            #endif
-            loadWordsFromFile("../data/words.txt");
-            initializeGrid();
-            if (generateCrosswordRandom(0)) {
-assignClueNumbers();
-                exportCrosswordAsJson();
-                success = true;
-            }
-            attempts++;
-        }
-        if (!success) {
-            fprintf(stderr, "{\"error\": \"Failed to generate crossword after 10 attempts.\"}\n");
-        }
-    } else if (argc > 1 && strcmp(argv[1], "generate-static") == 0) {
+                bool success = false;
+                while (attempts < 20 && !success) { // More attempts for smaller grid
+                    loadWordsFromFile("../data/words.txt");
+                    if (numWords > 4) numWords = 4; // Limit words for a 5x5 grid to 4
+                    initializeGrid();
+                    if (generateCrosswordRandom(0)) {
+                        assignClueNumbers();
+                        exportCrosswordAsJson();
+                        success = true;
+                    }
+                    attempts++;
+                }
+                if (!success) {
+                    fprintf(stderr, "{\"error\": \"Failed to generate 5x5 crossword after 20 attempts.\"}\n");
+                    return 1; // Return non-zero exit code on failure
+                }
+            } else if (argc > 1 && strcmp(argv[1], "generate") == 0) {
+                int attempts = 0;
+                bool success = false;
+                while (attempts < 10 && !success) {
+                    #ifdef DEBUG
+                    fprintf(stderr, "Generation attempt %d...\n", attempts + 1);
+                    #endif
+                    loadWordsFromFile("../data/words.txt");
+                    initializeGrid();
+                    if (generateCrosswordRandom(0)) {
+                        assignClueNumbers();
+                        exportCrosswordAsJson();
+                        success = true;
+                    }
+                    attempts++;
+                }
+                if (!success) {
+                    fprintf(stderr, "{\"error\": \"Failed to generate crossword after 10 attempts.\"}\n");
+                    return 1; // Return non-zero exit code on failure
+                }    } else if (argc > 1 && strcmp(argv[1], "generate-static") == 0) {
         if (generateStaticCrossword()) {
             assignClueNumbers();
             exportCrosswordAsJson();
@@ -145,8 +165,8 @@ bool generateStaticCrossword() {
 
 // Initializes the grid with empty cells (e.g., '*') and clue numbers to 0
 void initializeGrid() {
-    for (int i = 0; i < MAX_GRID_SIZE; i++) {
-        for (int j = 0; j < MAX_GRID_SIZE; j++) {
+    for (int i = 0; i < active_grid_size; i++) {
+        for (int j = 0; j < active_grid_size; j++) {
             grid[i][j] = ' '; // Use space for empty cells
             clueNumbersGrid[i][j] = 0;
         }
@@ -157,8 +177,8 @@ void initializeGrid() {
 
 // Prints the grid to console (for debugging)
 void printGrid() {
-    for (int i = 0; i < MAX_GRID_SIZE; i++) {
-        for (int j = 0; j < MAX_GRID_SIZE; j++) {
+    for (int i = 0; i < active_grid_size; i++) {
+        for (int j = 0; j < active_grid_size; j++) {
             printf("%c ", grid[i][j]);
         }
         printf("\n");
@@ -191,8 +211,8 @@ void loadWordsFromFile(const char* filename) {
                 word_len--;
             }
 
-            // Filter words by length suitable for MAX_GRID_SIZE
-            if (word_len > 0 && word_len <= MAX_GRID_SIZE) {
+            // Filter words by length suitable for the active grid size
+            if (word_len > 0 && word_len <= (size_t)active_grid_size) {
                 strncpy(tempWords[tempNumWords].word, word_str, MAX_WORD_LENGTH - 1);
                 tempWords[tempNumWords].word[MAX_WORD_LENGTH - 1] = '\0';
                 strncpy(tempWords[tempNumWords].clue, clue_str, MAX_CLUE_LENGTH - 1);
@@ -247,9 +267,9 @@ bool canPlaceWord(const Word* newWord, bool isFirstWord) {
 
     // Check boundaries first
     if (newWord->dir == 'A') { // Across
-        if (c + len > MAX_GRID_SIZE) return false;
+        if (c + len > active_grid_size) return false;
     } else { // Down
-        if (r + len > MAX_GRID_SIZE) return false;
+        if (r + len > active_grid_size) return false;
     }
 
     // Check for conflicts and count intersections
@@ -295,8 +315,8 @@ void removeWordFromGrid(const Word* wordToRemove, const char* overwritten) {
 // Assigns clue numbers to all placed words, handling shared starting cells.
 void assignClueNumbers() {
     // Reset clue numbers grid and word clue numbers
-    for (int i = 0; i < MAX_GRID_SIZE; i++) {
-        for (int j = 0; j < MAX_GRID_SIZE; j++) {
+    for (int i = 0; i < active_grid_size; i++) {
+        for (int j = 0; j < active_grid_size; j++) {
             clueNumbersGrid[i][j] = 0;
         }
     }
@@ -345,8 +365,8 @@ bool generateCrosswordRandom(int wordIndex) {
     int numPossiblePlacements = 0;
 
     // Find all valid placements for the current word.
-    for (int r = 0; r < MAX_GRID_SIZE; r++) {
-        for (int c = 0; c < MAX_GRID_SIZE; c++) {
+    for (int r = 0; r < active_grid_size; r++) {
+        for (int c = 0; c < active_grid_size; c++) {
             // Try placing Across
             currentWord->row = r;
             currentWord->col = c;
@@ -404,22 +424,22 @@ bool generateCrosswordRandom(int wordIndex) {
 void exportCrosswordAsJson() {
     fprintf(stdout, "{\n");
     fprintf(stdout, "  \"grid\": [");
-    for (int r = 0; r < MAX_GRID_SIZE; r++) {
+    for (int r = 0; r < active_grid_size; r++) {
         fprintf(stdout, "[");
-        for (int c = 0; c < MAX_GRID_SIZE; c++) {
-            fprintf(stdout, "\"%c\"%s", grid[r][c], (c == MAX_GRID_SIZE - 1) ? "" : ",");
+        for (int c = 0; c < active_grid_size; c++) {
+            fprintf(stdout, "\"%c\"%s", grid[r][c], (c == active_grid_size - 1) ? "" : ",");
         }
-        fprintf(stdout, "]%s", (r == MAX_GRID_SIZE - 1) ? "" : ",");
+        fprintf(stdout, "]%s", (r == active_grid_size - 1) ? "" : ",");
     }
     fprintf(stdout, "],\n");
 
     fprintf(stdout, "  \"clueNumbers\": [");
-    for (int r = 0; r < MAX_GRID_SIZE; r++) {
+    for (int r = 0; r < active_grid_size; r++) {
         fprintf(stdout, "[");
-        for (int c = 0; c < MAX_GRID_SIZE; c++) {
-            fprintf(stdout, "%d%s", clueNumbersGrid[r][c], (c == MAX_GRID_SIZE - 1) ? "" : ",");
+        for (int c = 0; c < active_grid_size; c++) {
+            fprintf(stdout, "%d%s", clueNumbersGrid[r][c], (c == active_grid_size - 1) ? "" : ",");
         }
-        fprintf(stdout, "]%s", (r == MAX_GRID_SIZE - 1) ? "" : ",");
+        fprintf(stdout, "]%s", (r == active_grid_size - 1) ? "" : ",");
     }
     fprintf(stdout, "],\n");
 

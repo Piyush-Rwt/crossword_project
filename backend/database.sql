@@ -1,18 +1,27 @@
-CREATE TABLE IF NOT EXISTS crossword_words (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    word VARCHAR(100) NOT NULL,
-    clue TEXT NOT NULL,
-    row_idx INT NOT NULL,
-    col_idx INT NOT NULL,
-    direction ENUM('A','D') NOT NULL,
-    clue_number INT NOT NULL
+-- PostgreSQL schema for the crossword game
+
+CREATE TABLE "crossword_words" (
+    "id" SERIAL PRIMARY KEY,
+    "word" VARCHAR(100) NOT NULL,
+    "clue" TEXT NOT NULL,
+    "row_idx" INT NOT NULL,
+    "col_idx" INT NOT NULL,
+    "direction" VARCHAR(1) NOT NULL CHECK ("direction" IN ('A', 'D')),
+    "clue_number" INT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS player_games (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    player_name VARCHAR(50) NOT NULL,
-    score INT NOT NULL,
-    time_taken INT NOT NULL,
-    words_solved JSON,
-    play_date DATETIME DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE "player_games" (
+    "id" SERIAL PRIMARY KEY,
+    "player_name" VARCHAR(50) NOT NULL UNIQUE,
+    "score" INT NOT NULL,
+    "time_taken" INT NOT NULL,
+    "words_solved" JSONB,
+    "play_date" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "users" (
+    "id" SERIAL PRIMARY KEY,
+    "username" VARCHAR(50) NOT NULL UNIQUE,
+    "password_hash" VARCHAR(255) NOT NULL,
+    "score" INT DEFAULT 0
 );

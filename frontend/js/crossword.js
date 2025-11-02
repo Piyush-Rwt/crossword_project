@@ -50,13 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 generateGrid(crosswordData.grid, crosswordData.clueNumbers);
                 populateClues(crosswordData.clues);
 
-                // Reset game state
-                currentScore = 0;
-                wordsSolved = {};
-                timerStarted = false;
-                startTime = null;
-                if (timerInterval) clearInterval(timerInterval);
-                if (timerDisplay) timerDisplay.textContent = '00:00';
+                // Start the timer automatically
+                if (!timerStarted) {
+                    timerStarted = true;
+                    startTime = Date.now();
+                    timerInterval = setInterval(updateTimerDisplay, 1000);
+                }
 
             } catch (error) {
                 console.error('Error fetching or generating crossword:', error);
@@ -106,14 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     input.dataset.col = c;
                     input.value = ''; // Ensure grid is empty on start
 
-                    // Start timer on first input
-                    input.addEventListener('input', () => {
-                        if (!timerStarted) {
-                            timerStarted = true;
-                            startTime = Date.now();
-                            timerInterval = setInterval(updateTimerDisplay, 1000);
-                        }
-                    });
+
                     cellDiv.appendChild(input);
 
                     if (clueNumbers[r][c] > 0) {

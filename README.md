@@ -131,11 +131,11 @@ The core of the puzzle generation is a command-line application written in C.
         *   **Why:** This randomization is crucial for ensuring that a different and unpredictable puzzle is generated each time the user plays, providing high replayability.
 
 *   **Key Functions:**
-    *   `loadWordsFromFile()`: Reads the `words.txt` file, shuffles the words, and selects a set of words for the puzzle.
-    *   `generateCrosswordRandom()`: The core recursive function that implements the backtracking algorithm to place words on the grid.
-    *   `canPlaceWord()`: A helper function that validates a potential word placement, checking for out-of-bounds errors and letter conflicts.
-    *   `assignClueNumbers()`: Iterates through the placed words to assign unique clue numbers to each starting cell.
-    *   `exportCrosswordAsJson()`: Serializes the completed grid, clues, and other metadata into a JSON string to be sent to the Node.js server.
+        *   `loadWordsFromFile()`: Reads the `words.txt` file, shuffles the words, and selects a set of words for the puzzle.
+        *   `generateCrosswordRandom()`: The core recursive function that implements the backtracking algorithm to place words on the grid.
+        *   `canPlaceWord()`: A helper function that validates a potential word placement, checking for out-of-bounds errors and letter conflicts.
+        *   `assignClueNumbers()`: Iterates through the placed words to assign unique clue numbers to each starting cell.
+        *   `exportCrosswordAsJson()`: Serializes the completed grid, clues, and other metadata into a JSON string to be sent to the Node.js server.
 
 ### Node.js Server
 

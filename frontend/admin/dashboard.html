@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        <div id="admin-content">
+            <h2>Welcome, Admin!</h2>
+            <p>This is the admin dashboard. You can manage puzzles and view player stats here.</p>
+            
+            <div class="admin-section">
+                <h3>Leaderboard</h3>
+                <div id="leaderboard-container">
+                    <!-- Leaderboard will be loaded here -->
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h3>Manage High Scores</h3>
+                <a href="/admin/delete-scores" class="btn btn-danger">Delete Game Log</a>
+                <a href="/admin/reset-leaderboard" class="btn btn-danger">Reset Leaderboard Scores</a>
+            </div>
+
+            <div>
+                <a href="/" class="btn btn-secondary">Back to Home</a>
+                <button id="logout-btn" class="btn btn-secondary">Logout</button>
+            </div>
+        </div>
+    </div>
+    <script src="/js/admin-dashboard.js"></script>
+    <script>
+        // Logout
+        const logoutBtn = document.getElementById('logout-btn');
+        if(logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/api/logout', { method: 'POST' });
+                    if (response.ok) {
+                        window.location.href = '/';
+                    } else {
+                        alert('Logout failed.');
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    alert('An error occurred during logout.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

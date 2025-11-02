@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crossword 1v1</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>1v1 Match</h1>
+        <div id="game-section">
+            <div id="timer" class="timer-1v1">05:00</div>
+            <div id="crossword-grid"></div>
+            <div class="clues-container">
+                <div class="clues-column">
+                    <h2>Across</h2>
+                    <ul id="across-clues"></ul>
+                </div>
+                <div class="clues-column">
+                    <h2>Down</h2>
+                    <ul id="down-clues"></ul>
+                </div>
+            </div>
+            <button id="finish-game-btn" class="btn">Finish Game</button>
+        </div>
+        <div id="waiting-for-results" style="display: none;">
+            <h2>Game Finished!</h2>
+            <p>Waiting for your opponent to finish...</p>
+            <div class="loader"></div>
+        </div>
+        <a href="index.html" class="btn btn-secondary">Forfeit Match</a>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/play-1v1.js"></script>
+</body>
+</html>

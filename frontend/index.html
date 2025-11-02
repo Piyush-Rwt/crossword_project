@@ -8,10 +8,79 @@
 </head>
 <body>
     <div class="container">
-        <h1>Crossword Puzzle</h1>
-        <p>A classic brain-teaser game. Challenge yourself!</p>
-        <a href="play.html" class="btn">Start Game</a>
-        <a href="result.html" class="btn btn-secondary">View High Scores</a>
+        <!-- Logged-out view -->
+        <div id="logged-out-view">
+            <h1>WELCOME TO CROSSWORD GAME</h1>
+            <div>
+                <a href="/login" class="btn">Login</a>
+                <a href="/signup" class="btn">Sign Up</a>
+            </div>
+            <div>
+                <a href="/admin-login" class="btn btn-admin">Admin Panel</a>
+                <a href="/help" class="btn btn-secondary">Help</a>
+            </div>
+        </div>
+
+        <!-- Logged-in view -->
+        <div id="logged-in-view" style="display: none;">
+            <h1>Welcome, <span id="username-placeholder"></span>!</h1>
+            <p>Ready to solve some puzzles?</p>
+            <div>
+            <a href="play.html" class="btn">Start New Game</a>
+            <a href="find-match.html" class="btn btn-secondary">1v1 Mode</a>
+            <a href="leaderboard.html" class="btn btn-secondary">Leaderboard</a>
+            </div>
+            <div>
+                <a href="result.html" class="btn btn-secondary">View Old High Scores</a>
+                <button id="logout-btn" class="btn btn-secondary">Logout</button>
+            </div>
+        </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const loggedOutView = document.getElementById('logged-out-view');
+            const loggedInView = document.getElementById('logged-in-view');
+            const usernamePlaceholder = document.getElementById('username-placeholder');
+
+            try {
+                const response = await fetch('/api/session/status');
+                const data = await response.json();
+
+                if (data.loggedIn) {
+                    usernamePlaceholder.textContent = data.user.username;
+                    loggedOutView.style.display = 'none';
+                    loggedInView.style.display = 'block';
+                } else {
+                    loggedOutView.style.display = 'block';
+                    loggedInView.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error checking session status:', error);
+                // Show logged-out view by default if there's an error
+                loggedOutView.style.display = 'block';
+                loggedInView.style.display = 'none';
+            }
+        });
+
+
+        // Logout
+        const logoutBtn = document.getElementById('logout-btn');
+        if(logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/api/logout', { method: 'POST' });
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('Logout failed.');
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    alert('An error occurred during logout.');
+                }
+            });
+        }
+    </script>
 </body>
 </html>
