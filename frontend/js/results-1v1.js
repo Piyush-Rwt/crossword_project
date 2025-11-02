@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultTitle = document.getElementById('result-title');
     const resultSummary = document.getElementById('result-summary');
     const youScoreEl = document.getElementById('you-score');
-    const youTimeEl = document('you-time');
+    const youTimeEl = document.getElementById('you-time');
     const opponentScoreEl = document.getElementById('opponent-score');
     const opponentTimeEl = document.getElementById('opponent-time');
 
