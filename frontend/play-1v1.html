@@ -26,10 +26,12 @@
         </div>
         <div id="waiting-for-results" style="display: none;">
             <h2>Game Finished!</h2>
+            <p id="your-final-results"></p>
             <p>Waiting for your opponent to finish...</p>
             <div class="loader"></div>
         </div>
-        <a href="index.html" class="btn btn-secondary">Forfeit Match</a>
+        <div id="opponent-status"></div>
+        <button id="forfeit-btn" class="btn btn-secondary">Forfeit Match</button>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>

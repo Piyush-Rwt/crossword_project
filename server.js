@@ -288,7 +288,8 @@ io.on('connection', (socket) => {
             player2.join(gameId);
             activeGames[gameId] = { players: [player1.id, player2.id], results: {} };
             console.log(`Match found! Game ID: ${gameId}. Players: ${player1.id} vs ${player2.id}`);
-            const cProcess = spawn(path.join(__dirname, 'backend', 'main'), ['generate-5x5'], { cwd: path.join(__dirname, 'backend') });
+            // Generate a 7x7 crossword for the match
+            const cProcess = spawn(path.join(__dirname, 'backend', 'main'), ['generate-sized', '7'], { cwd: path.join(__dirname, 'backend') });
             let output = '';
             let errorOutput = '';
             cProcess.stdout.on('data', (data) => output += data.toString());
@@ -318,6 +319,14 @@ io.on('connection', (socket) => {
         if (!game) return;
         console.log(`Player ${socket.id} finished game ${gameId} with score ${score} in ${timeTaken}s`);
         game.results[socket.id] = { score, timeTaken };
+
+        // Notify the other player that this player has finished
+        const opponentId = game.players.find(id => id !== socket.id);
+        if (opponentId) {
+            io.to(opponentId).emit('opponent-finished', { score, timeTaken });
+        }
+
+        // Check if both players have finished
         if (Object.keys(game.results).length === 2) {
             const [player1Id, player2Id] = game.players;
             const result1 = game.results[player1Id];
@@ -333,9 +342,25 @@ io.on('connection', (socket) => {
             const finalResults = { winnerId, player1: { id: player1Id, ...result1 }, player2: { id: player2Id, ...result2 } };
             console.log(`Game ${gameId} over. Winner: ${winnerId}.`);
             io.to(gameId).emit('game-over', finalResults);
+            // Clean up the game
             delete activeGames[gameId];
         }
     });
+
+    socket.on('player-forfeit', ({ gameId }) => {
+        const game = activeGames[gameId];
+        if (!game) return;
+
+        const opponentId = game.players.find(id => id !== socket.id);
+        if (opponentId) {
+            io.to(opponentId).emit('opponent-forfeited');
+            console.log(`Player ${socket.id} forfeited game ${gameId}. Notifying ${opponentId}.`);
+        }
+
+        // Clean up the game
+        delete activeGames[gameId];
+    });
+
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
         if (waitingPlayer && waitingPlayer.id === socket.id) {

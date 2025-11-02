@@ -85,6 +85,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Render grid with letters and clue numbers
     function generateGrid(grid, clueNumbers) {
+        gridElement.style.gridTemplateColumns = `repeat(${grid[0].length}, 1fr)`;
+        gridElement.style.gridTemplateRows = `repeat(${grid.length}, 1fr)`;
 
 
         for (let r = 0; r < grid.length; r++) {

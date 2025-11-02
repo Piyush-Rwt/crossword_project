@@ -50,26 +50,34 @@ bool generateStaticCrossword();
 int main(int argc, char *argv[]) {
     srand(time(NULL)); // Seed for randomization
 
-    if (argc > 1 && strcmp(argv[1], "generate-5x5") == 0) {
-        active_grid_size = 5; // Set grid size for 1v1 mode
+    if (argc > 2 && strcmp(argv[1], "generate-sized") == 0) {
+        active_grid_size = atoi(argv[2]);
+        if (active_grid_size <= 0 || active_grid_size > MAX_GRID_SIZE) {
+            active_grid_size = MAX_GRID_SIZE; // Default if size is invalid
+        }
+
         int attempts = 0;
-                bool success = false;
-                while (attempts < 20 && !success) { // More attempts for smaller grid
-                    loadWordsFromFile("../data/words.txt");
-                    if (numWords > 4) numWords = 4; // Limit words for a 5x5 grid to 4
-                    initializeGrid();
-                    if (generateCrosswordRandom(0)) {
-                        assignClueNumbers();
-                        exportCrosswordAsJson();
-                        success = true;
-                    }
-                    attempts++;
-                }
-                if (!success) {
-                    fprintf(stderr, "{\"error\": \"Failed to generate 5x5 crossword after 20 attempts.\"}\n");
-                    return 1; // Return non-zero exit code on failure
-                }
-            } else if (argc > 1 && strcmp(argv[1], "generate") == 0) {
+        bool success = false;
+        while (attempts < 20 && !success) {
+            loadWordsFromFile("../data/words.txt");
+            if (active_grid_size <= 7) {
+                if (numWords > 6) numWords = 6; // Limit words for 7x7 grid
+            } else {
+                if (numWords > 15) numWords = 15; // Limit for larger grids
+            }
+            initializeGrid();
+            if (generateCrosswordRandom(0)) {
+                assignClueNumbers();
+                exportCrosswordAsJson();
+                success = true;
+            }
+            attempts++;
+        }
+        if (!success) {
+            fprintf(stderr, "{\"error\": \"Failed to generate crossword of size %d after 20 attempts.\"}\n", active_grid_size);
+            return 1; // Return non-zero exit code on failure
+        }
+    } else if (argc > 1 && strcmp(argv[1], "generate") == 0) {
                 int attempts = 0;
                 bool success = false;
                 while (attempts < 10 && !success) {

@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const finishGameBtn = document.getElementById('finish-game-btn');
     const gameSection = document.getElementById('game-section');
     const waitingForResultsSection = document.getElementById('waiting-for-results');
+    const yourFinalResultsEl = document.getElementById('your-final-results');
+    const opponentStatusEl = document.getElementById('opponent-status');
+    const forfeitBtn = document.getElementById('forfeit-btn');
 
     const socket = io();
     let crosswordData = null;
@@ -35,7 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
         acrossCluesList.innerHTML = '';
         downCluesList.innerHTML = '';
 
-        gridElement.style.gridTemplateColumns = `repeat(${grid.length}, 1fr)`;
+        gridElement.style.gridTemplateColumns = `repeat(${grid[0].length}, 1fr)`;
+        gridElement.style.gridTemplateRows = `repeat(${grid.length}, 1fr)`;
 
         for (let r = 0; r < grid.length; r++) {
             for (let c = 0; c < grid[r].length; c++) {
@@ -119,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeTaken = 300 - timeRemaining;
 
         console.log(`Game finished. Score: ${score}, Time: ${timeTaken}s. Notifying server.`);
+        yourFinalResultsEl.textContent = `You finished with a score of ${score} in ${timeTaken} seconds.`;
         socket.emit('player-finished', { gameId, score, timeTaken });
     }
 
@@ -129,6 +134,34 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Game over. Results:', results);
         sessionStorage.setItem('1v1-results', JSON.stringify(results));
         window.location.href = '/results-1v1.html';
+    });
+
+    socket.on('opponent-finished', ({ score, timeTaken }) => {
+        opponentStatusEl.textContent = `Your opponent has finished with a score of ${score} in ${timeTaken} seconds.`;
+        opponentStatusEl.style.display = 'block';
+    });
+
+    socket.on('opponent-forfeited', () => {
+        if (timerInterval) clearInterval(timerInterval);
+        gridElement.querySelectorAll('input').forEach(input => input.disabled = true);
+        finishGameBtn.disabled = true;
+        forfeitBtn.disabled = true;
+        
+        resultTitle.textContent = 'You Won!';
+        resultSummary.textContent = 'Your opponent forfeited the match.';
+
+        // Redirect to results page after a delay
+        setTimeout(() => {
+            // You can create a simpler results page for forfeits or reuse the main one
+            window.location.href = 'index.html'; 
+        }, 3000);
+    });
+
+    forfeitBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to forfeit the match?')) {
+            socket.emit('player-forfeit', { gameId });
+            window.location.href = 'index.html'; // Redirect immediately after forfeiting
+        }
     });
 
     socket.on('error', (message) => {
