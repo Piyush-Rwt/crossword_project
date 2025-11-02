@@ -348,13 +348,19 @@ io.on('connection', (socket) => {
     });
 
     socket.on('player-forfeit', ({ gameId }) => {
+        console.log(`Server received player-forfeit from ${socket.id} for game ${gameId}`);
         const game = activeGames[gameId];
-        if (!game) return;
+        if (!game) {
+            console.log(`Game ${gameId} not found for forfeit from ${socket.id}`);
+            return;
+        }
 
         const opponentId = game.players.find(id => id !== socket.id);
         if (opponentId) {
             io.to(opponentId).emit('opponent-forfeited');
             console.log(`Player ${socket.id} forfeited game ${gameId}. Notifying ${opponentId}.`);
+        } else {
+            console.log(`Opponent not found for game ${gameId} when player ${socket.id} forfeited.`);
         }
 
         // Clean up the game
