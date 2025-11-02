@@ -12,8 +12,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express-session": "^1.18.0",
+    "express": "^5.1.0",
     "pg": "^8.12.0",
+    "bcrypt": "^5.1.1",
+    "express-session": "^1.18.0",
     "socket.io": "^4.7.5"
   }
 }
