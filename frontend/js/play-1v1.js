@@ -133,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.on('game-over', (results) => {
         console.log('Game over. Results:', results);
         sessionStorage.setItem('1v1-results', JSON.stringify(results));
+        sessionStorage.setItem('mySocketId', socket.id); // Store current player's socket ID
         window.location.href = '/results-1v1.html';
     });
 
@@ -147,20 +148,29 @@ document.addEventListener('DOMContentLoaded', () => {
         finishGameBtn.disabled = true;
         forfeitBtn.disabled = true;
         
-        resultTitle.textContent = 'You Won!';
-        resultSummary.textContent = 'Your opponent forfeited the match.';
-
-        // Redirect to results page after a delay
-        setTimeout(() => {
-            // You can create a simpler results page for forfeits or reuse the main one
-            window.location.href = 'index.html'; 
-        }, 3000);
+        // Prepare results for the results page
+        const results = {
+            winnerId: socket.id, // Current player wins by forfeit
+            forfeit: true,
+            message: 'Your opponent forfeited the match.'
+        };
+        sessionStorage.setItem('1v1-results', JSON.stringify(results));
+        sessionStorage.setItem('mySocketId', socket.id); // Store current player's socket ID
+        window.location.href = '/results-1v1.html';
     });
 
     forfeitBtn.addEventListener('click', () => {
         if (confirm('Are you sure you want to forfeit the match?')) {
             socket.emit('player-forfeit', { gameId });
-            window.location.href = 'index.html'; // Redirect immediately after forfeiting
+            // Prepare results for the results page
+            const results = {
+                winnerId: 'opponent', // Opponent wins by current player's forfeit
+                forfeit: true,
+                message: 'You forfeited the match.'
+            };
+            sessionStorage.setItem('1v1-results', JSON.stringify(results));
+            sessionStorage.setItem('mySocketId', socket.id); // Store current player's socket ID
+            window.location.href = '/results-1v1.html';
         }
     });
 

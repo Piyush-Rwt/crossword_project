@@ -1,18 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
     const resultTitle = document.getElementById('result-title');
+    const resultSummary = document.getElementById('result-summary');
     const youScoreEl = document.getElementById('you-score');
-    const youTimeEl = document.getElementById('you-time');
+    const youTimeEl = document('you-time');
     const opponentScoreEl = document.getElementById('opponent-score');
     const opponentTimeEl = document.getElementById('opponent-time');
-    const opponentDisconnectedEl = document.getElementById('opponent-disconnected-msg');
-
-    const socket = io();
 
     const resultsData = JSON.parse(sessionStorage.getItem('1v1-results'));
-    const myId = socket.id;
+    const mySocketId = sessionStorage.getItem('mySocketId');
 
     if (!resultsData) {
         resultTitle.textContent = 'No results found.';
+        return;
+    }
+
+    if (resultsData.forfeit) {
+        resultTitle.textContent = resultsData.winnerId === mySocketId ? 'You Won!' : 'You Lost';
+        resultSummary.textContent = resultsData.message;
+        // Hide score comparison for forfeit
+        document.querySelector('.results-comparison').style.display = 'none';
         return;
     }
 
@@ -22,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let myResult, opponentResult;
 
-    if (player1.id === myId) {
+    if (player1.id === mySocketId) {
         myResult = player1;
         opponentResult = player2;
     } else {
@@ -37,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     opponentTimeEl.textContent = opponentResult.timeTaken;
 
     // Determine and display winner
-    if (winnerId === myId) {
+    if (winnerId === mySocketId) {
         resultTitle.textContent = 'You Won!';
         document.getElementById('you-result').classList.add('winner');
         document.getElementById('opponent-result').classList.add('loser');
@@ -47,17 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('opponent-result').classList.add('winner');
     }
 
-    // Handle opponent disconnection message
-    socket.on('opponent-disconnected', () => {
-        if (opponentDisconnectedEl) {
-            opponentDisconnectedEl.style.display = 'block';
-        }
-        resultTitle.textContent = 'You Won!';
-        resultSummary.textContent = 'Your opponent disconnected.';
-    });
-
     // Clean up session storage
     sessionStorage.removeItem('1v1-results');
     sessionStorage.removeItem('crosswordData');
     sessionStorage.removeItem('gameId');
+    sessionStorage.removeItem('mySocketId');
 });
