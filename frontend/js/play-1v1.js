@@ -95,9 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function endGame() {
         if (timerInterval) clearInterval(timerInterval);
 
-        // Disable grid and button
+        // Disable grid and buttons
         gridElement.querySelectorAll('input').forEach(input => input.disabled = true);
         finishGameBtn.disabled = true;
+        forfeitBtn.disabled = true;
 
         // Show waiting message
         gameSection.style.display = 'none';
@@ -124,11 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log(`Game finished. Score: ${score}, Time: ${timeTaken}s. Notifying server.`);
         yourFinalResultsEl.textContent = `You finished with a score of ${score} in ${timeTaken} seconds.`;
-        socket.emit('player-finished', { gameId, score, timeTaken });
+        opponentStatusEl.textContent = 'Opponent is still playing...';
+        opponentStatusEl.style.display = 'block';
 
-        setTimeout(() => {
-            window.location.href = '/results-1v1.html';
-        }, 200); // Small delay to ensure event is sent
+        socket.emit('player-finished', { gameId, score, timeTaken });
     }
 
     finishGameBtn.addEventListener('click', endGame);
@@ -146,42 +146,12 @@ document.addEventListener('DOMContentLoaded', () => {
         opponentStatusEl.style.display = 'block';
     });
 
-    socket.on('opponent-forfeited', () => {
-        if (timerInterval) clearInterval(timerInterval);
-        gridElement.querySelectorAll('input').forEach(input => input.disabled = true);
-        finishGameBtn.disabled = true;
-        forfeitBtn.disabled = true;
-        
-        // Prepare results for the results page
-        const results = {
-            winnerId: socket.id, // Current player wins by forfeit
-            forfeit: true,
-            message: 'Your opponent forfeited the match.'
-        };
-        sessionStorage.setItem('1v1-results', JSON.stringify(results));
-        sessionStorage.setItem('mySocketId', socket.id); // Store current player's socket ID
-        
-        setTimeout(() => {
-            window.location.href = '/results-1v1.html';
-        }, 200); // Small delay to ensure event is sent
-    });
+
 
     forfeitBtn.addEventListener('click', () => {
         if (confirm('Are you sure you want to forfeit the match?')) {
             console.log("Forfeit button clicked"); // test log
             socket.emit('player-forfeit', { gameId });
-            // Prepare results for the results page
-            const results = {
-                winnerId: 'opponent', // Opponent wins by current player's forfeit
-                forfeit: true,
-                message: 'You forfeited the match.'
-            };
-            sessionStorage.setItem('1v1-results', JSON.stringify(results));
-            sessionStorage.setItem('mySocketId', socket.id); // Store current player's socket ID
-            
-            setTimeout(() => {
-                window.location.href = '/results-1v1.html';
-            }, 200); // Small delay to ensure event is sent
         }
     });
 
