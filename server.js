@@ -315,75 +315,91 @@ io.on('connection', (socket) => {
         }
     });
     socket.on('player-finished', ({ gameId, score, timeTaken }) => {
-        const game = activeGames[gameId];
-        if (!game) return;
-
-        console.log(`Player ${socket.id} finished game ${gameId} with score ${score} in ${timeTaken}s`);
-        game.results[socket.id] = { score, timeTaken };
-
-        const opponentId = game.players.find(id => id !== socket.id);
-        if (opponentId) {
-            io.to(opponentId).emit('opponent-finished', { score, timeTaken });
-        }
-
-        if (Object.keys(game.results).length === 2) {
-            // Both players finished, determine winner
-            const [player1Id, player2Id] = game.players;
-            const result1 = game.results[player1Id];
-            const result2 = game.results[player2Id];
-            let winnerId;
-            if (result1.score > result2.score) {
-                winnerId = player1Id;
-            } else if (result2.score > result1.score) {
-                winnerId = player2Id;
-            } else {
-                winnerId = result1.timeTaken < result2.timeTaken ? player1Id : player2Id;
+        try {
+            const game = activeGames[gameId];
+            if (!game) {
+                console.log(`[DEBUG] Game not found for gameId: ${gameId}`);
+                return;
             }
-            const finalResults = { winnerId, player1: { id: player1Id, ...result1 }, player2: { id: player2Id, ...result2 } };
-            io.to(gameId).emit('game-over', finalResults);
-            delete activeGames[gameId];
-        } else {
-            // One player finished, start a timeout for the other
-            game.timeout = setTimeout(() => {
-                if (activeGames[gameId] && Object.keys(game.results).length === 1) {
-                    const winnerId = Object.keys(game.results)[0];
-                    const finalResults = {
-                        winnerId,
-                        forfeit: true,
-                        message: 'Opponent timed out.'
-                    };
-                    io.to(gameId).emit('game-over', finalResults);
-                    delete activeGames[gameId];
+
+            console.log(`[DEBUG] Player ${socket.id} finished. Score: ${score}, Time: ${timeTaken}`);
+            game.results[socket.id] = { score, timeTaken };
+            console.log(`[DEBUG] Game results for ${gameId}:`, game.results);
+
+            const opponentId = game.players.find(id => id !== socket.id);
+            if (opponentId) {
+                io.to(opponentId).emit('opponent-finished', { score, timeTaken });
+            }
+
+            if (Object.keys(game.results).length === 2) {
+                console.log(`[DEBUG] Both players finished. Determining winner for game ${gameId}.`);
+                // Both players finished, determine winner
+                const [player1Id, player2Id] = game.players;
+                const result1 = game.results[player1Id];
+                const result2 = game.results[player2Id];
+                let winnerId;
+                if (result1.score > result2.score) {
+                    winnerId = player1Id;
+                } else if (result2.score > result1.score) {
+                    winnerId = player2Id;
+                } else {
+                    winnerId = result1.timeTaken < result2.timeTaken ? player1Id : player2Id;
                 }
-            }, 60000); // 60-second timeout
+                const finalResults = { winnerId, player1: { id: player1Id, ...result1 }, player2: { id: player2Id, ...result2 } };
+                io.to(gameId).emit('game-over', finalResults);
+                console.log(`[DEBUG] Game over for ${gameId}. Winner: ${winnerId}. Deleting game.`);
+                delete activeGames[gameId];
+            } else {
+                console.log(`[DEBUG] One player finished. Starting timeout for game ${gameId}.`);
+                // One player finished, start a timeout for the other
+                game.timeout = setTimeout(() => {
+                    if (activeGames[gameId] && Object.keys(game.results).length === 1) {
+                        const winnerId = Object.keys(game.results)[0];
+                        const finalResults = {
+                            winnerId,
+                            forfeit: true,
+                            message: 'Opponent timed out.'
+                        };
+                        io.to(gameId).emit('game-over', finalResults);
+                        console.log(`[DEBUG] Timeout for game ${gameId}. Winner by timeout: ${winnerId}. Deleting game.`);
+                        delete activeGames[gameId];
+                    }
+                }, 60000); // 60-second timeout
+            }
+        } catch (error) {
+            console.error('[ERROR] in player-finished handler:', error);
         }
     });
 
     socket.on('player-forfeit', ({ gameId }) => {
-    console.log(`Server received player-forfeit from ${socket.id} for game ${gameId}`);
-    const game = activeGames[gameId];
-    if (!game) {
-        console.log(`Game ${gameId} not found for forfeit from ${socket.id}`);
-        return;
-    }
+        try {
+            console.log(`Server received player-forfeit from ${socket.id} for game ${gameId}`);
+            const game = activeGames[gameId];
+            if (!game) {
+                console.log(`Game ${gameId} not found for forfeit from ${socket.id}`);
+                return;
+            }
 
-    const opponentId = game.players.find(id => id !== socket.id);
-    if (opponentId) {
-        // Instead of just notifying, we end the game for everyone.
-        const finalResults = {
-            winnerId: opponentId, // The opponent is the winner
-            forfeit: true,
-            message: `Player ${socket.id} forfeited the match.`
-        };
-        io.to(gameId).emit('game-over', finalResults);
-        console.log(`Player ${socket.id} forfeited. ${opponentId} wins game ${gameId}.`);
-    } else {
-        console.log(`Opponent not found for game ${gameId} when player ${socket.id} forfeited.`);
-    }
+            const opponentId = game.players.find(id => id !== socket.id);
+            if (opponentId) {
+                // Instead of just notifying, we end the game for everyone.
+                const finalResults = {
+                    winnerId: opponentId, // The opponent is the winner
+                    forfeit: true,
+                    message: `Player ${socket.id} forfeited the match.`
+                };
+                io.to(gameId).emit('game-over', finalResults);
+                console.log(`Player ${socket.id} forfeited. ${opponentId} wins game ${gameId}.`);
+            } else {
+                console.log(`Opponent not found for game ${gameId} when player ${socket.id} forfeited.`);
+            }
 
-    // Clean up the game
-    delete activeGames[gameId];
-});
+            // Clean up the game
+            delete activeGames[gameId];
+        } catch (error) {
+            console.error('[ERROR] in player-forfeit handler:', error);
+        }
+    });
 
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
@@ -395,8 +411,10 @@ io.on('connection', (socket) => {
             const game = activeGames[gameId];
             if (game.players.includes(socket.id)) {
                 const opponentId = game.players.find(id => id !== socket.id);
-                io.to(opponentId).emit('opponent-disconnected');
-                console.log(`Player ${socket.id} disconnected from game ${gameId}. Notifying ${opponentId}.`);
+                if (opponentId) {
+                    io.to(opponentId).emit('opponent-disconnected');
+                    console.log(`Player ${socket.id} disconnected from game ${gameId}. Notifying ${opponentId}.`);
+                }
                 delete activeGames[gameId];
                 break;
             }
