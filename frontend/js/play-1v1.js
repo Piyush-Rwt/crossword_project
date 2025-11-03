@@ -151,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     forfeitBtn.addEventListener('click', () => {
         if (confirm('Are you sure you want to forfeit the match?')) {
             console.log("Forfeit button clicked"); // test log
+            console.log(`[DEBUG] Forfeiting game with gameId: ${gameId}`);
             socket.emit('player-forfeit', { gameId });
         }
     });
