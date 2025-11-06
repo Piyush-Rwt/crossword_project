@@ -3,7 +3,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 const { Pool } = require('pg');
 const session = require('express-session');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const http = require('http');
 const { Server } = require("socket.io");
 const sharedsession = require("express-socket.io-session");
@@ -28,7 +28,7 @@ const io = new Server(server, {
 const port = 3000;
 const saltRounds = 10;
 
-const ADMIN_PASSWORD_HASH = '$2b$10$e/O/iTDO9RIhtvFJh5vLHe827cgfZJD/rT7K1blhPHv6zP55HRuAe';
+const ADMIN_PASSWORD_HASH = '$2a$10$e/O/iTDO9RIhtvFJh5vLHe827cgfZJD/rT7K1blhPHv6zP55HRuAe';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
