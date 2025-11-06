@@ -158,6 +158,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    socket.on('opponent-disconnected', () => {
+        alert('Your opponent has disconnected. The game has been cancelled.');
+        sessionStorage.removeItem('gameId');
+        sessionStorage.removeItem('crosswordData');
+        window.location.href = '/';
+    });
+
     socket.on('error', (message) => {
         alert(`A server error occurred: ${message}`);
         window.location.href = 'index.html';
