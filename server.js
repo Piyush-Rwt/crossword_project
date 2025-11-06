@@ -291,148 +291,206 @@ const activeGames = {};
 
 io.on('connection', (socket) => {
     console.log('A user connected with socket id:', socket.id);
-    socket.on('find-1v1-match', () => {
-        console.log('Player', socket.id, 'is looking for a 1v1 match.');
-        if (waitingPlayer) {
-            const player1 = waitingPlayer;
-            const player2 = socket;
-            const gameId = `game_${Date.now()}`;
-            waitingPlayer = null;
-            player1.join(gameId);
-            player2.join(gameId);
-            activeGames[gameId] = { players: [player1.id, player2.id], results: {} };
-            console.log(`Match found! Game ID: ${gameId}. Players: ${player1.id} vs ${player2.id}`);
-            // Generate a 7x7 crossword for the match
-            const cProcess = spawn(path.join(__dirname, 'backend', 'main'), ['generate-sized', '7'], { cwd: path.join(__dirname, 'backend') });
-            let output = '';
-            let errorOutput = '';
-            cProcess.stdout.on('data', (data) => output += data.toString());
-            cProcess.stderr.on('data', (data) => errorOutput += data.toString());
-            cProcess.on('close', (code) => {
-                if (code === 0) {
-                    try {
-                        const crosswordData = JSON.parse(output);
-                        io.to(gameId).emit('match-found', { gameId, crosswordData });
-                    } catch (e) {
-                        console.error('Failed to parse 5x5 C backend output:', e, 'Output:', output);
-                        io.to(gameId).emit('error', 'Failed to create a game.');
-                    }
-                } else {
-                    console.error(`5x5 C backend exited with code ${code}. Stderr: ${errorOutput}`);
-                    io.to(gameId).emit('error', 'Failed to create a game.');
-                }
-            });
-        } else {
-            waitingPlayer = socket;
-            socket.emit('waiting-for-match');
-            console.log('Player', socket.id, 'is now waiting for an opponent.');
-        }
-    });
-    socket.on('player-finished', ({ gameId, score, timeTaken }) => {
+    socket.on('find-1v1-match', async () => {
+        const client = await pool.connect();
         try {
-            const game = activeGames[gameId];
-            if (!game) {
-                console.log(`[DEBUG] Game not found for gameId: ${gameId}`);
-                return;
-            }
+            console.log(`Player ${socket.id} is looking for a 1v1 match.`);
+            await client.query('BEGIN');
 
-            console.log(`[DEBUG] Player ${socket.id} finished. Score: ${score}, Time: ${timeTaken}`);
-            game.results[socket.id] = { score, timeTaken };
-            console.log(`[DEBUG] Game results for ${gameId}:`, game.results);
+            // Add the current player to the players table if they don't exist
+            await client.query('INSERT INTO players (socket_id) VALUES ($1) ON CONFLICT (socket_id) DO NOTHING', [socket.id]);
 
-            const opponentId = game.players.find(id => id !== socket.id);
-            if (opponentId) {
-                io.to(opponentId).emit('opponent-finished', { score, timeTaken });
-            }
+            // Find a waiting player
+            const { rows: waitingPlayers } = await client.query(
+                'SELECT * FROM players WHERE is_waiting = true AND socket_id != $1 LIMIT 1', 
+                [socket.id]
+            );
 
-            if (Object.keys(game.results).length === 2) {
-                console.log(`[DEBUG] Both players finished. Determining winner for game ${gameId}.`);
-                // Both players finished, determine winner
-                const [player1Id, player2Id] = game.players;
-                const result1 = game.results[player1Id];
-                const result2 = game.results[player2Id];
-                let winnerId;
-                if (result1.score > result2.score) {
-                    winnerId = player1Id;
-                } else if (result2.score > result1.score) {
-                    winnerId = player2Id;
-                } else {
-                    winnerId = result1.timeTaken < result2.timeTaken ? player1Id : player2Id;
-                }
-                const finalResults = { winnerId, player1: { id: player1Id, ...result1 }, player2: { id: player2Id, ...result2 } };
-                io.to(gameId).emit('game-over', finalResults);
-                console.log(`[DEBUG] Game over for ${gameId}. Winner: ${winnerId}. Deleting game.`);
-                delete activeGames[gameId];
-            } else {
-                console.log(`[DEBUG] One player finished. Starting timeout for game ${gameId}.`);
-                // One player finished, start a timeout for the other
-                game.timeout = setTimeout(() => {
-                    if (activeGames[gameId] && Object.keys(game.results).length === 1) {
-                        const winnerId = Object.keys(game.results)[0];
-                        const finalResults = {
-                            winnerId,
-                            forfeit: true,
-                            message: 'Opponent timed out.'
-                        };
-                        io.to(gameId).emit('game-over', finalResults);
-                        console.log(`[DEBUG] Timeout for game ${gameId}. Winner by timeout: ${winnerId}. Deleting game.`);
-                        delete activeGames[gameId];
+            if (waitingPlayers.length > 0) {
+                // Match found
+                const player1 = waitingPlayers[0];
+                const player2_socket_id = socket.id;
+
+                // Create a new game in the active_1v1 table
+                const gameId = `game_${Date.now()}`;
+                await client.query(
+                    'INSERT INTO active_1v1 (game_id, player1_id, player2_id, status) VALUES ($1, $2, $3, $4)',
+                    [gameId, player1.socket_id, player2_socket_id, 'active']
+                );
+
+                // Mark both players as no longer waiting
+                await client.query('UPDATE players SET is_waiting = false WHERE socket_id = $1 OR socket_id = $2', [player1.socket_id, player2_socket_id]);
+
+                await client.query('COMMIT');
+
+                console.log(`Match found! Game ID: ${gameId}. Players: ${player1.socket_id} vs ${player2_socket_id}`);
+
+                // Generate crossword and start the game
+                const cProcess = spawn(path.join(__dirname, 'backend', 'main'), ['generate-sized', '7'], { cwd: path.join(__dirname, 'backend') });
+                let output = '';
+                cProcess.stdout.on('data', (data) => output += data.toString());
+                cProcess.on('close', (code) => {
+                    if (code === 0) {
+                        try {
+                            const crosswordData = JSON.parse(output);
+                            io.to(player1.socket_id).to(player2_socket_id).emit('match-found', { gameId, crosswordData });
+                        } catch (e) {
+                            io.to(player1.socket_id).to(player2_socket_id).emit('error', 'Failed to create a game.');
+                        }
+                    } else {
+                        io.to(player1.socket_id).to(player2_socket_id).emit('error', 'Failed to create a game.');
                     }
-                }, 60000); // 60-second timeout
+                });
+
+            } else {
+                // No waiting players, so mark the current player as waiting
+                await client.query('UPDATE players SET is_waiting = true WHERE socket_id = $1', [socket.id]);
+                await client.query('COMMIT');
+                socket.emit('waiting-for-match');
+                console.log(`Player ${socket.id} is now waiting for an opponent.`);
             }
         } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('[ERROR] in find-1v1-match handler:', error);
+            socket.emit('error', 'An error occurred while finding a match.');
+        } finally {
+            client.release();
+        }
+    });
+    socket.on('player-finished', async ({ gameId, score, timeTaken }) => {
+        const client = await pool.connect();
+        try {
+            console.log(`[DEBUG] Player ${socket.id} finished game ${gameId} with score ${score} in ${timeTaken}s.`);
+            await client.query('BEGIN');
+
+            let { rows: games } = await client.query('SELECT * FROM active_1v1 WHERE game_id = $1 AND status = \'active\'', [gameId]);
+            if (games.length === 0) {
+                console.log(`[ERROR] Game not found or not active for player-finished event. Game ID: ${gameId}`);
+                await client.query('ROLLBACK');
+                return;
+            }
+            let game = games[0];
+
+            // Determine if the current player is player1 or player2 and update their score
+            const isPlayer1 = game.player1_id === socket.id;
+            if (isPlayer1) {
+                await client.query('UPDATE active_1v1 SET player1_score = $1, player1_time = $2 WHERE game_id = $3', [score, timeTaken, gameId]);
+            } else {
+                await client.query('UPDATE active_1v1 SET player2_score = $1, player2_time = $2 WHERE game_id = $3', [score, timeTaken, gameId]);
+            }
+
+            // Refresh game state
+            let { rows: updatedGames } = await client.query('SELECT * FROM active_1v1 WHERE game_id = $1', [gameId]);
+            game = updatedGames[0];
+
+            const opponentId = isPlayer1 ? game.player2_id : game.player1_id;
+            io.to(opponentId).emit('opponent-finished', { score, timeTaken });
+
+            // Check if both players have finished
+            if (game.player1_score !== null && game.player2_score !== null) {
+                // Both players finished, determine winner
+                let winnerId;
+                if (game.player1_score > game.player2_score) {
+                    winnerId = game.player1_id;
+                } else if (game.player2_score > game.player1_score) {
+                    winnerId = game.player2_id;
+                } else {
+                    // Tie in score, winner is the one with less time
+                    winnerId = game.player1_time < game.player2_time ? game.player1_id : game.player2_id;
+                }
+
+                await client.query('UPDATE active_1v1 SET status = \'ended\' WHERE game_id = $1', [gameId]);
+
+                const finalResults = {
+                    winnerId,
+                    player1: { id: game.player1_id, score: game.player1_score, timeTaken: game.player1_time },
+                    player2: { id: game.player2_id, score: game.player2_score, timeTaken: game.player2_time }
+                };
+
+                io.to(gameId).emit('game-over', finalResults);
+                console.log(`[DEBUG] Game over for ${gameId}. Winner: ${winnerId}.`);
+            }
+
+            await client.query('COMMIT');
+        } catch (error) {
+            await client.query('ROLLBACK');
             console.error('[ERROR] in player-finished handler:', error);
+        } finally {
+            client.release();
         }
     });
 
-    socket.on('player-forfeit', ({ gameId }) => {
+    socket.on('player-forfeit', async ({ gameId }) => {
+        const client = await pool.connect();
         try {
             console.log(`[DEBUG] Server received player-forfeit for gameId: ${gameId}`);
-            console.log(`[DEBUG] Current activeGames object:`, JSON.stringify(activeGames, null, 2));
+            await client.query('BEGIN');
 
-            const game = activeGames[gameId];
-            if (!game) {
-                console.log(`[ERROR] Game not found for forfeit from ${socket.id}. Game ID: ${gameId}`);
-                return;
-            }
+            const { rows: activeGames } = await client.query('SELECT * FROM active_1v1 WHERE game_id = $1 AND status = \'active\'', [gameId]);
 
-            const opponentId = game.players.find(id => id !== socket.id);
-            if (opponentId) {
-                const finalResults = {
-                    winnerId: opponentId,
-                    forfeit: true,
-                    message: `Player ${socket.id} forfeited the match.`
-                };
-                io.to(gameId).emit('game-over', finalResults);
-                console.log(`[DEBUG] Player ${socket.id} forfeited. ${opponentId} wins game ${gameId}. Emitting 'game-over'.`);
+            if (activeGames.length > 0) {
+                const game = activeGames[0];
+                const opponentId = game.player1_id === socket.id ? game.player2_id : game.player1_id;
+
+                await client.query('UPDATE active_1v1 SET status = \'forfeited\' WHERE game_id = $1', [gameId]);
+
+                if (opponentId) {
+                    const finalResults = {
+                        winnerId: opponentId,
+                        forfeit: true,
+                        message: `Player ${socket.id} forfeited the match.`
+                    };
+                    io.to(game.game_id).emit('game-over', finalResults);
+                    console.log(`[DEBUG] Player ${socket.id} forfeited. ${opponentId} wins game ${game.game_id}. Emitting 'game-over'.`);
+                }
+                await client.query('COMMIT');
             } else {
-                console.log(`[ERROR] Opponent not found for game ${gameId} when player ${socket.id} forfeited.`);
+                console.log(`[ERROR] Game not found for forfeit from ${socket.id}. Game ID: ${gameId}`);
+                await client.query('ROLLBACK');
             }
-
-            delete activeGames[gameId];
-            console.log(`[DEBUG] Deleted game ${gameId} from activeGames.`);
         } catch (error) {
+            await client.query('ROLLBACK');
             console.error('[ERROR] in player-forfeit handler:', error);
+        } finally {
+            client.release();
         }
     });
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
-        if (waitingPlayer && waitingPlayer.id === socket.id) {
-            waitingPlayer = null;
-            console.log('The waiting player has disconnected. Queue is now empty.');
-        }
-        for (const gameId in activeGames) {
-            const game = activeGames[gameId];
-            if (game.players.includes(socket.id)) {
-                const opponentId = game.players.find(id => id !== socket.id);
+    socket.on('disconnect', async () => {
+        const client = await pool.connect();
+        try {
+            console.log(`User disconnected: ${socket.id}`);
+            await client.query('BEGIN');
+
+            // Find if the player was in an active game
+            const { rows: activeGames } = await client.query(
+                'SELECT * FROM active_1v1 WHERE (player1_id = $1 OR player2_id = $1) AND status = \'active\'',
+                [socket.id]
+            );
+
+            if (activeGames.length > 0) {
+                const game = activeGames[0];
+                const opponentId = game.player1_id === socket.id ? game.player2_id : game.player1_id;
+
+                // Mark the game as forfeited
+                await client.query('UPDATE active_1v1 SET status = \'forfeited\' WHERE game_id = $1', [game.game_id]);
+
+                // Notify the opponent
                 if (opponentId) {
                     io.to(opponentId).emit('opponent-disconnected');
-                    console.log(`Player ${socket.id} disconnected from game ${gameId}. Notifying ${opponentId}.`);
+                    console.log(`Player ${socket.id} disconnected from game ${game.game_id}. Notifying ${opponentId}.`);
                 }
-                delete activeGames[gameId];
-                break;
             }
+
+            // Remove the player from the players table
+            await client.query('DELETE FROM players WHERE socket_id = $1', [socket.id]);
+
+            await client.query('COMMIT');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('[ERROR] in disconnect handler:', error);
+        } finally {
+            client.release();
         }
     });
 });

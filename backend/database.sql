@@ -25,3 +25,22 @@ CREATE TABLE "users" (
     "password_hash" VARCHAR(255) NOT NULL,
     "score" INT DEFAULT 0
 );
+
+CREATE TABLE "players" (
+    "player_id" SERIAL PRIMARY KEY,
+    "socket_id" VARCHAR(255) NOT NULL UNIQUE,
+    "is_waiting" BOOLEAN DEFAULT false,
+    "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "active_1v1" (
+    "game_id" VARCHAR(255) PRIMARY KEY,
+    "player1_id" VARCHAR(255) NOT NULL,
+    "player2_id" VARCHAR(255) NOT NULL,
+    "status" VARCHAR(50) NOT NULL DEFAULT 'active',
+    "player1_score" INT,
+    "player2_score" INT,
+    "player1_time" INT,
+    "player2_time" INT,
+    "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
