@@ -159,7 +159,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     socket.on('opponent-disconnected', () => {
-        alert('Your opponent has disconnected. The game has been cancelled.');
+        // Opponent disconnected, so the game is over.
+        // Clean up session storage and redirect to the home page.
         sessionStorage.removeItem('gameId');
         sessionStorage.removeItem('crosswordData');
         window.location.href = '/';
