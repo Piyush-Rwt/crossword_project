@@ -7,9 +7,23 @@ const bcrypt = require('bcrypt');
 const http = require('http');
 const { Server } = require("socket.io");
 
+process.on("uncaughtException", (err) => {
+  console.error("[ERROR] Uncaught Exception:", err);
+  // Consider graceful shutdown or restart mechanism here
+});
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("[ERROR] Unhandled Rejection:", reason);
+  // Consider graceful shutdown or restart mechanism here
+});
+
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: "*",   // or your frontend domain
+    methods: ["GET", "POST"]
+  }
+});
 
 const port = 3000;
 const saltRounds = 10;
