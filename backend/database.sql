@@ -35,8 +35,8 @@ CREATE TABLE "players" (
 
 CREATE TABLE "active_1v1" (
     "game_id" VARCHAR(255) PRIMARY KEY,
-    "player1_id" VARCHAR(255) NOT NULL,
-    "player2_id" VARCHAR(255) NOT NULL,
+    "player1_id" INT NOT NULL REFERENCES "players"("player_id") ON DELETE CASCADE,
+    "player2_id" INT NOT NULL REFERENCES "players"("player_id") ON DELETE CASCADE,
     "status" VARCHAR(50) NOT NULL DEFAULT 'active',
     "player1_score" INT,
     "player2_score" INT,

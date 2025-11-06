@@ -7,14 +7,14 @@ A full-stack crossword game application featuring a C backend for dynamic puzzle
 - **Dynamic Crossword Generation:** The C backend algorithmically generates a new, random crossword puzzle for each game.
 - **Interactive Grid:** Play the game in your browser with an interactive grid and clue lists.
 - **Scoring & Answer Checking:** Your answers are checked in real-time, and a score is maintained.
-- **High Score Leaderboard:** The game saves high scores to a MySQL database.
+- **High Score Leaderboard:** The game saves high scores to a PostgreSQL database.
 - **Player Tools:** Includes a "Show Answers" feature for when you're stuck and an option to clear the high score board.
 
 ## Tech Stack
 
 - **Backend:** C (for puzzle generation), Node.js, Express.js
 - **Frontend:** HTML, CSS, Vanilla JavaScript
-- **Database:** MySQL
+- **Database:** PostgreSQL
 
 ---
 
@@ -26,22 +26,22 @@ Follow these steps to get the application running on your local machine.
 
 - A C compiler (like **GCC**)
 - **Node.js** and **npm**
-- A running **MySQL** server
+- A running **PostgreSQL** server
 
 ### 2. Database Setup
 
-You must set up the MySQL database for the game to store words and high scores.
+You must set up the PostgreSQL database for the game to store words and high scores.
 
-1.  **Connect to your MySQL server** and create a database. For example:
+1.  **Connect to your PostgreSQL server** and create a database. For example:
     ```sql
     CREATE DATABASE crossword_db;
     ```
-2.  **Use the new database**:
-    ```sql
-    USE crossword_db;
+2.  **Connect to the new database**:
+    ```bash
+    psql crossword_db
     ```
 3.  **Create the tables** by running the SQL commands found in `backend/database.sql`.
-4.  **Update Credentials:** Open `server.js` and update the `user` and `password` in the `mysql.createPool` configuration to match your MySQL setup.
+4.  **Update Credentials:** Open `server.js` and update the `connectionString` in the `new Pool` configuration to match your PostgreSQL setup.
 
 ### 3. Install Dependencies
 
@@ -51,7 +51,7 @@ Navigate to the project root directory (`C:\Users\DELL\crossword_project`) in yo
 npm install
 ```
 
-This will install the required Node.js packages (Express, mysql2).
+This will install the required Node.js packages (Express, pg).
 
 ---
 
@@ -148,12 +148,12 @@ The server acts as the central coordinator for the entire application.
 *   **Key Responsibilities:**
     *   **API Routing:** Manages all the API endpoints (e.g., `/api/generateCrossword`, `/api/checkAnswer`, `/api/scores`) that the frontend calls.
     *   **Process Management:** Uses the built-in `child_process` module to spawn the C backend executable. This allows the Node.js server to leverage the high-performance C code for puzzle generation without blocking its main event loop.
-    *   **Database Interaction:** Manages a connection pool to the MySQL database and executes all SQL queries for checking answers, saving scores, and fetching the leaderboard.
+    *   **Database Interaction:** Manages a connection pool to the PostgreSQL database and executes all SQL queries for checking answers, saving scores, and fetching the leaderboard.
 
-### Database (MySQL)
+### Database (PostgreSQL)
 
 *   **Technology:**
-    *   **MySQL:** A popular, open-source relational database management system (RDBMS) used for its reliability and widespread support.
+    *   **PostgreSQL:** A popular, open-source relational database management system (RDBMS) used for its reliability and widespread support.
 
 *   **Schema:**
     *   `crossword_words` table:

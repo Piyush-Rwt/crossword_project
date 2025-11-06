@@ -1,26 +1,25 @@
 const express = require('express');
 const path = require('path');
 const { spawn } = require('child_process');
-const { Pool } = require('pg'); // Use the pg library
+const { Pool } = require('pg');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const http = require('http');
 const { Server } = require("socket.io");
+const sharedsession = require("express-socket.io-session");
 
 process.on("uncaughtException", (err) => {
   console.error("[ERROR] Uncaught Exception:", err);
-  // Consider graceful shutdown or restart mechanism here
 });
 process.on("unhandledRejection", (reason, promise) => {
   console.error("[ERROR] Unhandled Rejection:", reason);
-  // Consider graceful shutdown or restart mechanism here
 });
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",   // or your frontend domain
+    origin: "*",
     methods: ["GET", "POST"]
   }
 });
@@ -33,23 +32,24 @@ const ADMIN_PASSWORD_HASH = '$2b$10$e/O/iTDO9RIhtvFJh5vLHe827cgfZJD/rT7K1blhPHv6
 // Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'frontend')));
-app.use(session({
+const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'your_secret_key',
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false }
+});
+app.use(sessionMiddleware);
+
+io.use(sharedsession(sessionMiddleware, {
+    autoSave: true
 }));
 
-// PostgreSQL Connection Pool
-// It automatically uses the DATABASE_URL environment variable on Render.
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
         rejectUnauthorized: false
     }
 });
-
-// --- AUTHENTICATION MIDDLEWARE ---
 
 const isAuthenticated = (req, res, next) => {
     if (req.session.user) {
@@ -67,8 +67,6 @@ const isAdmin = (req, res, next) => {
     }
 };
 
-// --- AUTHENTICATION ROUTES ---
-
 app.post('/api/signup', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -82,7 +80,7 @@ app.post('/api/signup', async (req, res) => {
         );
         res.status(201).json({ status: 'User created successfully.', userId: rows[0].id });
     } catch (error) {
-        if (error.code === '23505') { // Unique violation in PostgreSQL
+        if (error.code === '23505') {
             return res.status(409).json({ error: 'Username already exists.' });
         }
         console.error('Database error during sign-up:', error);
@@ -151,8 +149,6 @@ app.get('/api/session/status', (req, res) => {
     }
 });
 
-// --- GAME & API ROUTES ---
-
 app.get('/api/generateCrossword', (req, res) => {
     const cProcess = spawn(path.join(__dirname, 'backend', 'main'), ['generate'], { cwd: path.join(__dirname, 'backend') });
     let output = '';
@@ -201,29 +197,20 @@ app.post('/api/checkAnswer', async (req, res) => {
 app.post('/api/endGame', isAuthenticated, async (req, res) => {
     const { score, timeTaken, wordsSolved } = req.body;
     const userId = req.session.user.id;
-    const username = req.session.user.username;
     if (score === undefined || timeTaken === undefined || !wordsSolved) {
         return res.status(400).json({ error: 'Missing game data.' });
     }
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
-        await client.query('UPDATE "users" SET score = score + $1 WHERE id = $2', [score, userId]);
-        const { rows: existingScores } = await client.query('SELECT id, score FROM "player_games" WHERE player_name = $1', [username]);
-        if (existingScores.length === 0) {
-            await client.query(
-                'INSERT INTO "player_games" (player_name, score, time_taken, words_solved) VALUES ($1, $2, $3, $4)',
-                [username, score, timeTaken, JSON.stringify(wordsSolved)]
-            );
-        } else {
-            const existingScore = existingScores[0];
-            if (score > existingScore.score) {
-                await client.query(
-                    'UPDATE "player_games" SET score = $1, time_taken = $2, words_solved = $3, play_date = CURRENT_TIMESTAMP WHERE id = $4',
-                    [score, timeTaken, JSON.stringify(wordsSolved), existingScore.id]
-                );
-            }
-        }
+        await client.query(
+            'INSERT INTO "player_games" (user_id, score, time_taken, words_solved) VALUES ($1, $2, $3, $4)',
+            [userId, score, timeTaken, JSON.stringify(wordsSolved)]
+        );
+        await client.query(
+            'UPDATE "users" SET total_score = total_score + $1, games_played = games_played + 1, highscore = GREATEST(highscore, $1) WHERE id = $2',
+            [score, userId]
+        );
         await client.query('COMMIT');
         res.json({ status: 'Game data saved successfully.' });
     } catch (error) {
@@ -237,7 +224,7 @@ app.post('/api/endGame', isAuthenticated, async (req, res) => {
 
 app.get('/api/leaderboard', async (req, res) => {
     try {
-        const { rows } = await pool.query('SELECT username, score FROM "users" ORDER BY score DESC LIMIT 10');
+        const { rows } = await pool.query('SELECT * FROM leaderboard ORDER BY highscore DESC LIMIT 10');
         res.json(rows);
     } catch (error) {
         console.error('DB error in /api/leaderboard:', error);
@@ -247,7 +234,7 @@ app.get('/api/leaderboard', async (req, res) => {
 
 app.get('/api/scores', async (req, res) => {
     try {
-        const { rows } = await pool.query('SELECT player_name, score, time_taken, play_date FROM "player_games" ORDER BY score DESC, time_taken ASC LIMIT 10');
+        const { rows } = await pool.query('SELECT u.username, pg.score, pg.time_taken, pg.play_date FROM "player_games" pg JOIN "users" u ON pg.user_id = u.id ORDER BY pg.score DESC, pg.time_taken ASC LIMIT 10');
         res.json(rows);
     } catch (error) {
         console.error('DB error in /api/scores:', error);
@@ -267,7 +254,7 @@ app.delete('/api/scores', isAdmin, async (req, res) => {
 
 app.delete('/api/users/scores', isAdmin, async (req, res) => {
     try {
-        await pool.query('UPDATE "users" SET score = 0');
+        await pool.query('UPDATE "users" SET total_score = 0, highscore = 0, games_played = 0, wins = 0, losses = 0');
         res.status(200).json({ status: 'All user scores have been reset to 0.' });
     } catch (error) {
         console.error('DB error in /api/users/scores DELETE:', error);
@@ -275,7 +262,6 @@ app.delete('/api/users/scores', isAdmin, async (req, res) => {
     }
 });
 
-// --- FRONTEND SERVING ---
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'login.html')));
 app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'signup.html')));
 app.get('/help', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'help.html')));
@@ -285,47 +271,54 @@ app.get('/admin/dashboard', isAdmin, (req, res) => res.sendFile(path.join(__dirn
 app.get('/admin/delete-scores', isAdmin, (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'admin', 'delete-scores.html')));
 app.get('/admin/reset-leaderboard', isAdmin, (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'admin', 'reset-leaderboard.html')));
 
-// --- 1v1 MATCHMAKING LOGIC ---
-let waitingPlayer = null;
-const activeGames = {};
-
 io.on('connection', (socket) => {
     console.log('A user connected with socket id:', socket.id);
+
     socket.on('find-1v1-match', async () => {
+        if (!socket.handshake.session.user) {
+            return socket.emit('error', 'User not authenticated.');
+        }
+        const userId = socket.handshake.session.user.id;
         const client = await pool.connect();
         try {
-            console.log(`Player ${socket.id} is looking for a 1v1 match.`);
+            console.log(`Player ${socket.id} (user: ${userId}) is looking for a 1v1 match.`);
             await client.query('BEGIN');
 
-            // Add the current player to the players table if they don't exist
-            await client.query('INSERT INTO players (socket_id) VALUES ($1) ON CONFLICT (socket_id) DO NOTHING', [socket.id]);
+            const { rows: currentPlayerRows } = await client.query(
+                'INSERT INTO players (socket_id, user_id) VALUES ($1, $2) ON CONFLICT (socket_id) DO UPDATE SET user_id = $2 RETURNING player_id',
+                [socket.id, userId]
+            );
+            const currentPlayerId = currentPlayerRows[0].player_id;
 
-            // Find a waiting player
             const { rows: waitingPlayers } = await client.query(
-                'SELECT * FROM players WHERE is_waiting = true AND socket_id != $1 LIMIT 1', 
-                [socket.id]
+                'SELECT * FROM players WHERE is_waiting = true AND player_id != $1 LIMIT 1',
+                [currentPlayerId]
             );
 
             if (waitingPlayers.length > 0) {
-                // Match found
                 const player1 = waitingPlayers[0];
-                const player2_socket_id = socket.id;
+                const player2_id = currentPlayerId;
 
-                // Create a new game in the active_1v1 table
                 const gameId = `game_${Date.now()}`;
                 await client.query(
                     'INSERT INTO active_1v1 (game_id, player1_id, player2_id, status) VALUES ($1, $2, $3, $4)',
-                    [gameId, player1.socket_id, player2_socket_id, 'active']
+                    [gameId, player1.player_id, player2_id, 'active']
                 );
 
-                // Mark both players as no longer waiting
-                await client.query('UPDATE players SET is_waiting = false WHERE socket_id = $1 OR socket_id = $2', [player1.socket_id, player2_socket_id]);
+                await client.query('UPDATE players SET is_waiting = false WHERE player_id = $1 OR player_id = $2', [player1.player_id, player2_id]);
 
                 await client.query('COMMIT');
 
-                console.log(`Match found! Game ID: ${gameId}. Players: ${player1.socket_id} vs ${player2_socket_id}`);
+                const { rows: player1SocketRows } = await client.query('SELECT socket_id FROM players WHERE player_id = $1', [player1.player_id]);
+                const player1_socket_id = player1SocketRows[0].socket_id;
+                const player2_socket_id = socket.id;
+                
+                io.to(player1_socket_id).emit('join-game-room', gameId);
+                io.to(player2_socket_id).emit('join-game-room', gameId);
 
-                // Generate crossword and start the game
+
+                console.log(`Match found! Game ID: ${gameId}. Players: ${player1_socket_id} vs ${player2_socket_id}`);
+
                 const cProcess = spawn(path.join(__dirname, 'backend', 'main'), ['generate-sized', '7'], { cwd: path.join(__dirname, 'backend') });
                 let output = '';
                 cProcess.stdout.on('data', (data) => output += data.toString());
@@ -333,18 +326,17 @@ io.on('connection', (socket) => {
                     if (code === 0) {
                         try {
                             const crosswordData = JSON.parse(output);
-                            io.to(player1.socket_id).to(player2_socket_id).emit('match-found', { gameId, crosswordData });
+                            io.to(player1_socket_id).to(player2_socket_id).emit('match-found', { gameId, crosswordData });
                         } catch (e) {
-                            io.to(player1.socket_id).to(player2_socket_id).emit('error', 'Failed to create a game.');
+                            io.to(player1_socket_id).to(player2_socket_id).emit('error', 'Failed to create a game.');
                         }
                     } else {
-                        io.to(player1.socket_id).to(player2_socket_id).emit('error', 'Failed to create a game.');
+                        io.to(player1_socket_id).to(player2_socket_id).emit('error', 'Failed to create a game.');
                     }
                 });
 
             } else {
-                // No waiting players, so mark the current player as waiting
-                await client.query('UPDATE players SET is_waiting = true WHERE socket_id = $1', [socket.id]);
+                await client.query('UPDATE players SET is_waiting = true WHERE player_id = $1', [currentPlayerId]);
                 await client.query('COMMIT');
                 socket.emit('waiting-for-match');
                 console.log(`Player ${socket.id} is now waiting for an opponent.`);
@@ -357,11 +349,19 @@ io.on('connection', (socket) => {
             client.release();
         }
     });
+
     socket.on('player-finished', async ({ gameId, score, timeTaken }) => {
         const client = await pool.connect();
         try {
             console.log(`[DEBUG] Player ${socket.id} finished game ${gameId} with score ${score} in ${timeTaken}s.`);
             await client.query('BEGIN');
+
+            const { rows: playerRows } = await client.query('SELECT player_id FROM players WHERE socket_id = $1', [socket.id]);
+            if (playerRows.length === 0) {
+                await client.query('ROLLBACK');
+                return;
+            }
+            const playerId = playerRows[0].player_id;
 
             let { rows: games } = await client.query('SELECT * FROM active_1v1 WHERE game_id = $1 AND status = \'active\'', [gameId]);
             if (games.length === 0) {
@@ -371,44 +371,60 @@ io.on('connection', (socket) => {
             }
             let game = games[0];
 
-            // Determine if the current player is player1 or player2 and update their score
-            const isPlayer1 = game.player1_id === socket.id;
+            const isPlayer1 = game.player1_id === playerId;
             if (isPlayer1) {
                 await client.query('UPDATE active_1v1 SET player1_score = $1, player1_time = $2 WHERE game_id = $3', [score, timeTaken, gameId]);
             } else {
                 await client.query('UPDATE active_1v1 SET player2_score = $1, player2_time = $2 WHERE game_id = $3', [score, timeTaken, gameId]);
             }
 
-            // Refresh game state
             let { rows: updatedGames } = await client.query('SELECT * FROM active_1v1 WHERE game_id = $1', [gameId]);
             game = updatedGames[0];
 
             const opponentId = isPlayer1 ? game.player2_id : game.player1_id;
-            io.to(opponentId).emit('opponent-finished', { score, timeTaken });
+            const { rows: opponentSocketRows } = await client.query('SELECT socket_id FROM players WHERE player_id = $1', [opponentId]);
+            if (opponentSocketRows.length > 0) {
+                const opponentSocketId = opponentSocketRows[0].socket_id;
+                io.to(opponentSocketId).emit('opponent-finished', { score, timeTaken });
+            }
 
-            // Check if both players have finished
             if (game.player1_score !== null && game.player2_score !== null) {
-                // Both players finished, determine winner
-                let winnerId;
+                const { rows: p1Rows } = await client.query('SELECT user_id, socket_id FROM players WHERE player_id = $1', [game.player1_id]);
+                const { rows: p2Rows } = await client.query('SELECT user_id, socket_id FROM players WHERE player_id = $1', [game.player2_id]);
+                const player1UserId = p1Rows[0].user_id;
+                const player2UserId = p2Rows[0].user_id;
+                const player1SocketId = p1Rows[0].socket_id;
+                const player2SocketId = p2Rows[0].socket_id;
+
+                let winnerUserId, loserUserId;
                 if (game.player1_score > game.player2_score) {
-                    winnerId = game.player1_id;
+                    winnerUserId = player1UserId;
+                    loserUserId = player2UserId;
                 } else if (game.player2_score > game.player1_score) {
-                    winnerId = game.player2_id;
+                    winnerUserId = player2UserId;
+                    loserUserId = player1UserId;
                 } else {
-                    // Tie in score, winner is the one with less time
-                    winnerId = game.player1_time < game.player2_time ? game.player1_id : game.player2_id;
+                    if (game.player1_time < game.player2_time) {
+                        winnerUserId = player1UserId;
+                        loserUserId = player2UserId;
+                    } else {
+                        winnerUserId = player2UserId;
+                        loserUserId = player1UserId;
+                    }
                 }
 
-                await client.query('UPDATE active_1v1 SET status = \'ended\' WHERE game_id = $1', [gameId]);
+                await client.query('UPDATE users SET wins = wins + 1, games_played = games_played + 1 WHERE id = $1', [winnerUserId]);
+                await client.query('UPDATE users SET losses = losses + 1, games_played = games_played + 1 WHERE id = $1', [loserUserId]);
+                await client.query('UPDATE active_1v1 SET status = \'ended\', winner_id = $1, ended_at = CURRENT_TIMESTAMP WHERE game_id = $2', [winnerUserId, gameId]);
 
                 const finalResults = {
-                    winnerId,
-                    player1: { id: game.player1_id, score: game.player1_score, timeTaken: game.player1_time },
-                    player2: { id: game.player2_id, score: game.player2_score, timeTaken: game.player2_time }
+                    winnerId: winnerUserId === player1UserId ? player1SocketId : player2SocketId,
+                    player1: { id: player1SocketId, score: game.player1_score, timeTaken: game.player1_time },
+                    player2: { id: player2SocketId, score: game.player2_score, timeTaken: game.player2_time }
                 };
 
-                io.to(gameId).emit('game-over', finalResults);
-                console.log(`[DEBUG] Game over for ${gameId}. Winner: ${winnerId}.`);
+                io.to(player1SocketId).to(player2SocketId).emit('game-over', finalResults);
+                console.log(`[DEBUG] Game over for ${gameId}. Winner user: ${winnerUserId}.`);
             }
 
             await client.query('COMMIT');
@@ -423,26 +439,40 @@ io.on('connection', (socket) => {
     socket.on('player-forfeit', async ({ gameId }) => {
         const client = await pool.connect();
         try {
-            console.log(`[DEBUG] Server received player-forfeit for gameId: ${gameId}`);
+            console.log(`[DEBUG] Server received player-forfeit for gameId: ${gameId} from ${socket.id}`);
             await client.query('BEGIN');
+
+            const { rows: playerRows } = await client.query('SELECT player_id, user_id FROM players WHERE socket_id = $1', [socket.id]);
+            if (playerRows.length === 0) {
+                await client.query('ROLLBACK');
+                return;
+            }
+            const forfeiterPlayerId = playerRows[0].player_id;
+            const forfeiterUserId = playerRows[0].user_id;
 
             const { rows: activeGames } = await client.query('SELECT * FROM active_1v1 WHERE game_id = $1 AND status = \'active\'', [gameId]);
 
             if (activeGames.length > 0) {
                 const game = activeGames[0];
-                const opponentId = game.player1_id === socket.id ? game.player2_id : game.player1_id;
+                const opponentPlayerId = game.player1_id === forfeiterPlayerId ? game.player2_id : game.player1_id;
+                
+                const { rows: opponentPlayerRows } = await client.query('SELECT user_id, socket_id FROM players WHERE player_id = $1', [opponentPlayerId]);
+                const opponentUserId = opponentPlayerRows[0].user_id;
+                const opponentSocketId = opponentPlayerRows[0].socket_id;
 
-                await client.query('UPDATE active_1v1 SET status = \'forfeited\' WHERE game_id = $1', [gameId]);
+                await client.query('UPDATE users SET losses = losses + 1, games_played = games_played + 1 WHERE id = $1', [forfeiterUserId]);
+                await client.query('UPDATE users SET wins = wins + 1, games_played = games_played + 1 WHERE id = $1', [opponentUserId]);
+                await client.query('UPDATE active_1v1 SET status = \'forfeited\', winner_id = $1, ended_at = CURRENT_TIMESTAMP WHERE game_id = $2', [opponentUserId, gameId]);
 
-                if (opponentId) {
-                    const finalResults = {
-                        winnerId: opponentId,
-                        forfeit: true,
-                        message: `Player ${socket.id} forfeited the match.`
-                    };
-                    io.to(game.game_id).emit('game-over', finalResults);
-                    console.log(`[DEBUG] Player ${socket.id} forfeited. ${opponentId} wins game ${game.game_id}. Emitting 'game-over'.`);
-                }
+                const finalResults = {
+                    winnerId: opponentSocketId,
+                    forfeit: true,
+                    message: `Player ${socket.handshake.session.user.username} forfeited the match.`
+                };
+                
+                io.to(game.game_id).emit('game-over', finalResults);
+                console.log(`[DEBUG] Player ${forfeiterUserId} forfeited. ${opponentUserId} wins game ${game.game_id}.`);
+                
                 await client.query('COMMIT');
             } else {
                 console.log(`[ERROR] Game not found for forfeit from ${socket.id}. Game ID: ${gameId}`);
@@ -462,27 +492,35 @@ io.on('connection', (socket) => {
             console.log(`User disconnected: ${socket.id}`);
             await client.query('BEGIN');
 
-            // Find if the player was in an active game
+            const { rows: playerRows } = await client.query('SELECT player_id, user_id FROM players WHERE socket_id = $1', [socket.id]);
+            if (playerRows.length === 0) {
+                await client.query('ROLLBACK');
+                return;
+            }
+            const disconnectedPlayerId = playerRows[0].player_id;
+            const disconnectedUserId = playerRows[0].user_id;
+
             const { rows: activeGames } = await client.query(
                 'SELECT * FROM active_1v1 WHERE (player1_id = $1 OR player2_id = $1) AND status = \'active\'',
-                [socket.id]
+                [disconnectedPlayerId]
             );
 
             if (activeGames.length > 0) {
                 const game = activeGames[0];
-                const opponentId = game.player1_id === socket.id ? game.player2_id : game.player1_id;
+                const opponentPlayerId = game.player1_id === disconnectedPlayerId ? game.player2_id : game.player1_id;
 
-                // Mark the game as forfeited
-                await client.query('UPDATE active_1v1 SET status = \'forfeited\' WHERE game_id = $1', [game.game_id]);
+                const { rows: opponentPlayerRows } = await client.query('SELECT user_id, socket_id FROM players WHERE player_id = $1', [opponentPlayerId]);
+                const opponentUserId = opponentPlayerRows[0].user_id;
+                const opponentSocketId = opponentPlayerRows[0].socket_id;
 
-                // Notify the opponent
-                if (opponentId) {
-                    io.to(opponentId).emit('opponent-disconnected');
-                    console.log(`Player ${socket.id} disconnected from game ${game.game_id}. Notifying ${opponentId}.`);
-                }
+                await client.query('UPDATE users SET losses = losses + 1, games_played = games_played + 1 WHERE id = $1', [disconnectedUserId]);
+                await client.query('UPDATE users SET wins = wins + 1, games_played = games_played + 1 WHERE id = $1', [opponentUserId]);
+                await client.query('UPDATE active_1v1 SET status = \'forfeited\', winner_id = $1, ended_at = CURRENT_TIMESTAMP WHERE game_id = $2', [opponentUserId, game.game_id]);
+                
+                io.to(opponentSocketId).emit('opponent-disconnected');
+                console.log(`Player ${disconnectedUserId} disconnected from game ${game.game_id}. Notifying ${opponentSocketId}.`);
             }
 
-            // Remove the player from the players table
             await client.query('DELETE FROM players WHERE socket_id = $1', [socket.id]);
 
             await client.query('COMMIT');
