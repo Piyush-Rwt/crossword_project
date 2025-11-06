@@ -7,7 +7,7 @@ const bcrypt = require('bcrypt');
 const http = require('http');
 const { Server } = require("socket.io");
 const sharedsession = require("express-socket.io-session");
-const pgSession = require('connect-pg')(session);
+const pgSession = require('connect-pg-simple')(session);
 
 process.on("uncaughtException", (err) => {
   console.error("[ERROR] Uncaught Exception:", err);
