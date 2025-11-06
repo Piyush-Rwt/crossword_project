@@ -3,14 +3,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const acrossCluesList = document.getElementById('across-clues');
     const downCluesList = document.getElementById('down-clues');
     const timerDisplay = document.getElementById('timer');
-    const finishGameBtn = document.getElementById('finish-game-btn');
+    const finishGameBtn = document.getElementById('finishGameBtn');
     const gameSection = document.getElementById('game-section');
     const waitingForResultsSection = document.getElementById('waiting-for-results');
     const yourFinalResultsEl = document.getElementById('your-final-results');
     const opponentStatusEl = document.getElementById('opponent-status');
-    const forfeitBtn = document.getElementById('forfeit-btn');
+    const forfeitBtn = document.getElementById('forfeitBtn');
 
-    const socket = io();
+    const socket = io('https://crossword-project.onrender.com', {
+        transports: ['websocket']
+    });
     let crosswordData = null;
     let gameId = null;
     let timerInterval = null;
