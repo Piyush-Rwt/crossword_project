@@ -138,6 +138,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Game over. Results:', results);
         sessionStorage.setItem('1v1-results', JSON.stringify(results));
         sessionStorage.setItem('mySocketId', socket.id); // Store current player's socket ID
+        sessionStorage.removeItem('gameId');
+        sessionStorage.removeItem('crosswordData');
         window.location.href = '/results-1v1.html';
     });
 
