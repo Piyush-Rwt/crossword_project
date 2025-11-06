@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt');
 const http = require('http');
 const { Server } = require("socket.io");
 const sharedsession = require("express-socket.io-session");
+const pgSession = require('connect-pg')(session);
 
 process.on("uncaughtException", (err) => {
   console.error("[ERROR] Uncaught Exception:", err);
@@ -29,27 +30,31 @@ const saltRounds = 10;
 
 const ADMIN_PASSWORD_HASH = '$2b$10$e/O/iTDO9RIhtvFJh5vLHe827cgfZJD/rT7K1blhPHv6zP55HRuAe';
 
-// Middleware
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'frontend')));
-const sessionMiddleware = session({
-    secret: process.env.SESSION_SECRET || 'your_secret_key',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }
-});
-app.use(sessionMiddleware);
-
-io.use(sharedsession(sessionMiddleware, {
-    autoSave: true
-}));
-
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
         rejectUnauthorized: false
     }
 });
+
+// Middleware
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'frontend')));
+const sessionMiddleware = session({
+    store: new pgSession({
+        pool : pool,
+        tableName : 'user_sessions'
+      }),
+    secret: process.env.SESSION_SECRET || 'your_secret_key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
+});
+app.use(sessionMiddleware);
+
+io.use(sharedsession(sessionMiddleware, {
+    autoSave: true
+}));
 
 const isAuthenticated = (req, res, next) => {
     if (req.session.user) {
@@ -312,10 +317,9 @@ io.on('connection', (socket) => {
                 const { rows: player1SocketRows } = await client.query('SELECT socket_id FROM players WHERE player_id = $1', [player1.player_id]);
                 const player1_socket_id = player1SocketRows[0].socket_id;
                 const player2_socket_id = socket.id;
-                
-                io.to(player1_socket_id).emit('join-game-room', gameId);
-                io.to(player2_socket_id).emit('join-game-room', gameId);
 
+                io.sockets.sockets.get(player1_socket_id)?.join(gameId);
+                io.sockets.sockets.get(player2_socket_id)?.join(gameId);
 
                 console.log(`Match found! Game ID: ${gameId}. Players: ${player1_socket_id} vs ${player2_socket_id}`);
 
@@ -326,12 +330,12 @@ io.on('connection', (socket) => {
                     if (code === 0) {
                         try {
                             const crosswordData = JSON.parse(output);
-                            io.to(player1_socket_id).to(player2_socket_id).emit('match-found', { gameId, crosswordData });
+                            io.to(gameId).emit('match-found', { gameId, crosswordData });
                         } catch (e) {
-                            io.to(player1_socket_id).to(player2_socket_id).emit('error', 'Failed to create a game.');
+                            io.to(gameId).emit('error', 'Failed to create a game.');
                         }
                     } else {
-                        io.to(player1_socket_id).to(player2_socket_id).emit('error', 'Failed to create a game.');
+                        io.to(gameId).emit('error', 'Failed to create a game.');
                     }
                 });
 
@@ -345,6 +349,30 @@ io.on('connection', (socket) => {
             await client.query('ROLLBACK');
             console.error('[ERROR] in find-1v1-match handler:', error);
             socket.emit('error', 'An error occurred while finding a match.');
+        } finally {
+            client.release();
+        }
+    });
+
+    socket.on('rejoin-game', async ({ gameId }) => {
+        if (!socket.handshake.session.user) {
+            return;
+        }
+        const userId = socket.handshake.session.user.id;
+        const client = await pool.connect();
+        try {
+            const { rows } = await client.query(
+                'SELECT p.player_id FROM players p JOIN active_1v1 a ON (p.player_id = a.player1_id OR p.player_id = a.player2_id) WHERE a.game_id = $1 AND p.user_id = $2',
+                [gameId, userId]
+            );
+            if (rows.length > 0) {
+                const playerId = rows[0].player_id;
+                await client.query('UPDATE players SET socket_id = $1 WHERE player_id = $2', [socket.id, playerId]);
+                socket.join(gameId);
+                console.log(`Player ${userId} rejoined game ${gameId} with new socket ${socket.id}`);
+            }
+        } catch (error) {
+            console.error('[ERROR] in rejoin-game handler:', error);
         } finally {
             client.release();
         }
@@ -423,7 +451,7 @@ io.on('connection', (socket) => {
                     player2: { id: player2SocketId, score: game.player2_score, timeTaken: game.player2_time }
                 };
 
-                io.to(player1SocketId).to(player2SocketId).emit('game-over', finalResults);
+                io.to(gameId).emit('game-over', finalResults);
                 console.log(`[DEBUG] Game over for ${gameId}. Winner user: ${winnerUserId}.`);
             }
 
@@ -470,7 +498,7 @@ io.on('connection', (socket) => {
                     message: `Player ${socket.handshake.session.user.username} forfeited the match.`
                 };
                 
-                io.to(game.game_id).emit('game-over', finalResults);
+                io.to(gameId).emit('game-over', finalResults);
                 console.log(`[DEBUG] Player ${forfeiterUserId} forfeited. ${opponentUserId} wins game ${game.game_id}.`);
                 
                 await client.query('COMMIT');

@@ -20,6 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
         gameId = sessionStorage.getItem('gameId');
         const storedData = sessionStorage.getItem('crosswordData');
 
+        if (gameId) {
+            socket.emit('rejoin-game', { gameId });
+        }
+
         if (!gameId || !storedData) {
             alert('Could not find game data. Returning to homepage.');
             window.location.href = 'index.html';
@@ -95,16 +99,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function endGame() {
         if (timerInterval) clearInterval(timerInterval);
 
-        // Disable grid and buttons
         gridElement.querySelectorAll('input').forEach(input => input.disabled = true);
         finishGameBtn.disabled = true;
         forfeitBtn.disabled = true;
 
-        // Show waiting message
         gameSection.style.display = 'none';
         waitingForResultsSection.style.display = 'block';
 
-        // Calculate score
         let score = 0;
         for (const clue of crosswordData.clues) {
             let userWord = '';
@@ -117,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             if (userWord === clue.word.toUpperCase()) {
-                score += 10; // 10 points per correct word
+                score += 10;
             }
         }
 
@@ -133,11 +134,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     finishGameBtn.addEventListener('click', endGame);
 
-    // Listen for the final results from the server
     socket.on('game-over', (results) => {
         console.log('Game over. Results:', results);
         sessionStorage.setItem('1v1-results', JSON.stringify(results));
-        sessionStorage.setItem('mySocketId', socket.id); // Store current player's socket ID
+        sessionStorage.setItem('mySocketId', socket.id);
         sessionStorage.removeItem('gameId');
         sessionStorage.removeItem('crosswordData');
         window.location.href = '/results-1v1.html';
@@ -148,21 +148,18 @@ document.addEventListener('DOMContentLoaded', () => {
         opponentStatusEl.style.display = 'block';
     });
 
-
-
     forfeitBtn.addEventListener('click', () => {
         if (confirm('Are you sure you want to forfeit the match?')) {
-            console.log("Forfeit button clicked"); // test log
+            console.log("Forfeit button clicked");
             console.log(`[DEBUG] Forfeiting game with gameId: ${gameId}`);
             socket.emit('player-forfeit', { gameId });
         }
     });
 
     socket.on('opponent-disconnected', () => {
-        // Opponent disconnected, so the game is over.
-        // Clean up session storage and redirect to the home page.
         sessionStorage.removeItem('gameId');
         sessionStorage.removeItem('crosswordData');
+        alert('Your opponent has disconnected. You win!');
         window.location.href = '/';
     });
 
@@ -171,6 +168,5 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'index.html';
     });
 
-    // Initialize the game when the page loads
     initializeGame();
 });
