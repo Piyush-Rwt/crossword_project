@@ -387,29 +387,30 @@ io.on('connection', (socket) => {
 
     socket.on('player-forfeit', ({ gameId }) => {
         try {
-            console.log(`Server received player-forfeit from ${socket.id} for game ${gameId}`);
+            console.log(`[DEBUG] Server received player-forfeit for gameId: ${gameId}`);
+            console.log(`[DEBUG] Current activeGames object:`, JSON.stringify(activeGames, null, 2));
+
             const game = activeGames[gameId];
             if (!game) {
-                console.log(`Game ${gameId} not found for forfeit from ${socket.id}`);
+                console.log(`[ERROR] Game not found for forfeit from ${socket.id}. Game ID: ${gameId}`);
                 return;
             }
 
             const opponentId = game.players.find(id => id !== socket.id);
             if (opponentId) {
-                // Instead of just notifying, we end the game for everyone.
                 const finalResults = {
-                    winnerId: opponentId, // The opponent is the winner
+                    winnerId: opponentId,
                     forfeit: true,
                     message: `Player ${socket.id} forfeited the match.`
                 };
                 io.to(gameId).emit('game-over', finalResults);
-                console.log(`Player ${socket.id} forfeited. ${opponentId} wins game ${gameId}.`);
+                console.log(`[DEBUG] Player ${socket.id} forfeited. ${opponentId} wins game ${gameId}. Emitting 'game-over'.`);
             } else {
-                console.log(`Opponent not found for game ${gameId} when player ${socket.id} forfeited.`);
+                console.log(`[ERROR] Opponent not found for game ${gameId} when player ${socket.id} forfeited.`);
             }
 
-            // Clean up the game
             delete activeGames[gameId];
+            console.log(`[DEBUG] Deleted game ${gameId} from activeGames.`);
         } catch (error) {
             console.error('[ERROR] in player-forfeit handler:', error);
         }
