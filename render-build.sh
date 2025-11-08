@@ -4,7 +4,7 @@ set -o errexit
 
 # 1. Install C compiler
 echo "Installing C compiler..."
-apt-get update && apt-get install -y build-essential
+sudo apt-get update && sudo apt-get install -y build-essential
 
 # 2. Compile C code
 echo "Compiling C backend..."
