@@ -104,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gridElement.querySelectorAll('input').forEach(input => input.disabled = true);
         finishGameBtn.disabled = true;
         forfeitBtn.disabled = true;
+        forfeitBtn.style.display = 'none';
 
         gameSection.style.display = 'none';
         waitingForResultsSection.style.display = 'block';
