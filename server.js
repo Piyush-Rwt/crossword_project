@@ -3,7 +3,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 const { Pool } = require('pg');
 const session = require('express-session');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const http = require('http');
 const { Server } = require("socket.io");
 const sharedsession = require("express-socket.io-session");
@@ -22,7 +22,8 @@ const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"]
-  }
+  },
+  pingTimeout: 30000 
 });
 
 const port = 3000;
@@ -547,9 +548,9 @@ io.on('connection', (socket) => {
                 
                 io.to(opponentSocketId).emit('opponent-disconnected');
                 console.log(`Player ${disconnectedUserId} disconnected from game ${game.game_id}. Notifying ${opponentSocketId}.`);
+            } else {
+                await client.query('DELETE FROM players WHERE socket_id = $1', [socket.id]);
             }
-
-            await client.query('DELETE FROM players WHERE socket_id = $1', [socket.id]);
 
             await client.query('COMMIT');
         } catch (error) {

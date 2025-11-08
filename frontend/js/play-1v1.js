@@ -150,12 +150,23 @@ document.addEventListener('DOMContentLoaded', () => {
         opponentStatusEl.style.display = 'block';
     });
 
+    const forfeitModal = document.getElementById('forfeitModal');
+    const confirmForfeitBtn = document.getElementById('confirmForfeitBtn');
+    const cancelForfeitBtn = document.getElementById('cancelForfeitBtn');
+
     forfeitBtn.addEventListener('click', () => {
-        if (confirm('Are you sure you want to forfeit the match?')) {
-            console.log("Forfeit button clicked");
-            console.log(`[DEBUG] Forfeiting game with gameId: ${gameId}`);
-            socket.emit('player-forfeit', { gameId });
-        }
+        forfeitModal.style.display = 'flex';
+    });
+
+    cancelForfeitBtn.addEventListener('click', () => {
+        forfeitModal.style.display = 'none';
+    });
+
+    confirmForfeitBtn.addEventListener('click', () => {
+        forfeitModal.style.display = 'none';
+        console.log("Forfeit confirmed via modal");
+        console.log(`[DEBUG] Forfeiting game with gameId: ${gameId}`);
+        socket.emit('player-forfeit', { gameId });
     });
 
     socket.on('opponent-disconnected', () => {

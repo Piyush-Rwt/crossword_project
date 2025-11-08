@@ -34,6 +34,17 @@
         <button id="forfeitBtn" class="btn btn-secondary">Forfeit Match</button>
     </div>
 
+    <div id="forfeitModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirm Forfeit</h2>
+            <p>Are you sure you want to forfeit the match? This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button id="confirmForfeitBtn" class="btn">Confirm</button>
+                <button id="cancelForfeitBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/play-1v1.js"></script>
 </body>
