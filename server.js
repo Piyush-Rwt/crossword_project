@@ -535,20 +535,12 @@ io.on('connection', (socket) => {
             );
 
             if (activeGames.length > 0) {
-                const game = activeGames[0];
-                const opponentPlayerId = game.player1_id === disconnectedPlayerId ? game.player2_id : game.player1_id;
-
-                const { rows: opponentPlayerRows } = await client.query('SELECT user_id, socket_id FROM players WHERE player_id = $1', [opponentPlayerId]);
-                const opponentUserId = opponentPlayerRows[0].user_id;
-                const opponentSocketId = opponentPlayerRows[0].socket_id;
-
-                await client.query('UPDATE users SET losses = losses + 1, games_played = games_played + 1 WHERE id = $1', [disconnectedUserId]);
-                await client.query('UPDATE users SET wins = wins + 1, games_played = games_played + 1 WHERE id = $1', [opponentUserId]);
-                await client.query('UPDATE active_1v1 SET status = \'forfeited\', winner_id = $1, ended_at = CURRENT_TIMESTAMP WHERE game_id = $2', [opponentUserId, game.game_id]);
-                
-                io.to(opponentSocketId).emit('opponent-disconnected');
-                console.log(`Player ${disconnectedUserId} disconnected from game ${game.game_id}. Notifying ${opponentSocketId}.`);
+                // A player from an active game disconnected.
+                // We will let the rejoin logic handle re-connection.
+                // No action is needed here to end the game, as it might be a temporary disconnect.
+                console.log(`Player ${disconnectedUserId} from game ${activeGames[0].game_id} disconnected. Waiting for potential rejoin.`);
             } else {
+                // If the player was not in an active game (e.g., waiting for a match), it's safe to delete them.
                 await client.query('DELETE FROM players WHERE socket_id = $1', [socket.id]);
             }
 
