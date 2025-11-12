@@ -5,6 +5,7 @@ A full-stack crossword game application featuring a C backend for dynamic puzzle
 ## Features
 
 - **Dynamic Crossword Generation:** The C backend algorithmically generates a new, random crossword puzzle for each game.
+- **User Authentication:** Players can sign up and log in to track their scores and progress.
 - **Interactive Grid:** Play the game in your browser with an interactive grid and clue lists.
 - **1v1 Multiplayer Mode:** Compete against another player in a real-time match.
 - **Scoring & Answer Checking:** Your answers are checked in real-time, and a score is maintained.
@@ -102,11 +103,12 @@ The Node.js backend, built with the Express.js framework, acts as the central ne
 
 The database is the application's persistent storage layer and acts as the single source of truth for all user and game data.
 
-- **Key Tables:**
-    - `users`: Stores user account information, including username, hashed password, and aggregate stats (total score, wins, losses).
-    - `player_games`: Records the results of every completed single-player game.
+- **Key Tables & Views:**
+    - `users`: Stores user account information, including username, hashed password, and aggregate stats (total score, highscore, wins, losses, games played).
+    - `player_games`: Records the results of every completed single-player game, linked to a user via `user_id`.
     - `players`: A temporary table to manage the state of users who are currently searching for or playing a 1v1 match.
     - `active_1v1`: Stores the state of all ongoing 1v1 matches, including the players involved and their real-time scores.
+    - `leaderboard` (View): A pre-sorted view of the `users` table, providing a ranked list of players by their `highscore`.
 
 ### C Backend (Puzzle Generator)
 
