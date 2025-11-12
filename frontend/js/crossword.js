@@ -6,9 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const timerDisplay = document.getElementById('timer');
     const endGameBtn = document.getElementById('end-game');
 
-    const playerNameInput = document.getElementById('player-name');
-    const joinGameBtn = document.getElementById('join-game-btn');
-    const playerInputSection = document.getElementById('player-input-section');
     const gameSection = document.getElementById('game-section');
 
     let currentPlayerName = '';
@@ -37,6 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const response = await fetch('/api/generateCrossword');
                 if (!response.ok) {
+                    if (response.status === 401) { // If not authorized, redirect to login
+                        window.location.href = '/login';
+                        return;
+                    }
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 crosswordData = await response.json();
@@ -60,28 +61,29 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 console.error('Error fetching or generating crossword:', error);
                 alert('Failed to generate crossword. Please try again.');
-                // Optionally, show player input section again or redirect
-                playerInputSection.style.display = 'block';
                 gameSection.style.display = 'none';
             }
         }
     }
 
-    // Event listener for the Join Game button
-    if (joinGameBtn) {
-        joinGameBtn.addEventListener('click', () => {
-            const name = playerNameInput.value.trim();
-            if (name.length > 0 && name.length <= 10) {
-                currentPlayerName = name;
-                localStorage.setItem('playerName', currentPlayerName);
-                playerInputSection.style.display = 'none';
+    // Check session status and start the game
+    (async () => {
+        try {
+            const response = await fetch('/api/session/status');
+            const data = await response.json();
+
+            if (data.loggedIn) {
+                currentPlayerName = data.user.username;
                 gameSection.style.display = 'block';
                 initializeGame();
             } else {
-                alert('Please enter a valid name (1-10 characters).');
+                window.location.href = '/login';
             }
-        });
-    }
+        } catch (error) {
+            console.error('Error checking session status:', error);
+            window.location.href = '/login';
+        }
+    })();
 
     // Render grid with letters and clue numbers
     function generateGrid(grid, clueNumbers) {

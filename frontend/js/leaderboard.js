@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <tr>
                         <td>${index + 1}</td>
                         <td>${player.username}</td>
-                        <td>${player.score}</td>
+                        <td>${player.highscore}</td>
                     </tr>
                 `).join('')}
             </tbody>

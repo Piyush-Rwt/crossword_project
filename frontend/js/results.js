@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const row = scoresTableBody.insertRow();
                 row.innerHTML = `
                     <td>${index + 1}</td>
-                    <td>${score.player_name}</td>
+                    <td>${score.username}</td>
                     <td>${score.score}</td>
                     <td>${score.time_taken}s</td>
                     <td>${new Date(score.play_date).toLocaleDateString()}</td>
