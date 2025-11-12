@@ -141,13 +141,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const gameModal = document.getElementById('game-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalMessage = document.getElementById('modal-message');
+    const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+    const modalCancelBtn = document.getElementById('modal-cancel-btn');
+
+    function showModal(title, message, options = {}) {
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+
+        modalConfirmBtn.textContent = options.confirmText || 'OK';
+        modalCancelBtn.style.display = options.showCancel ? 'inline-block' : 'none';
+
+        gameModal.style.display = 'flex';
+
+        return new Promise((resolve) => {
+            modalConfirmBtn.onclick = () => {
+                gameModal.style.display = 'none';
+                resolve(true);
+            };
+            modalCancelBtn.onclick = () => {
+                gameModal.style.display = 'none';
+                resolve(false);
+            };
+        });
+    }
+
     // Handle answer submission
     const submitBtn = document.getElementById('submit-btn');
     if (submitBtn) {
         submitBtn.addEventListener('click', async () => {
-            // Gather all words from the grid and check them
-            // This is a simplified approach; a more robust one would identify words based on clue numbers
-            // For now, we'll iterate through the known words from crosswordData.clues
             if (!crosswordData || !crosswordData.clues) return;
 
             for (const clue of crosswordData.clues) {
@@ -155,7 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cells = Array.from(gridElement.querySelectorAll(`.cell-input[data-row][data-col]`));
                 let userWord = '';
 
-                // Reconstruct user's word from grid based on clue's position and direction
                 for (let i = 0; i < clue.length; i++) {
                     let r = clue.row + (clue.dir === 'D' ? i : 0);
                     let c = clue.col + (clue.dir === 'A' ? i : 0);
@@ -163,12 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (cellInput) {
                         userWord += cellInput.value.toUpperCase();
                     } else {
-                        userWord += ' '; // Placeholder for empty cell
+                        userWord += ' ';
                     }
                 }
 
                 if (userWord.length === clue.length && userWord.includes(' ')) {
-                    // Word is not fully entered, skip checking
                     continue;
                 }
 
@@ -181,29 +203,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     const result = await response.json();
 
                     if (result.correct) {
-                        if (!wordsSolved[wordId]) { // Only add score if not already solved
+                        if (!wordsSolved[wordId]) {
                             currentScore += result.scoreDelta;
                             wordsSolved[wordId] = true;
-                            // Highlight word in green
                             for (let i = 0; i < clue.length; i++) {
                                 let r = clue.row + (clue.dir === 'D' ? i : 0);
                                 let c = clue.col + (clue.dir === 'A' ? i : 0);
                                 const cellInput = cells.find(input => parseInt(input.dataset.row) === r && parseInt(input.dataset.col) === c);
                                 if (cellInput) {
-                                    cellInput.style.backgroundColor = '#e6ffe6'; // Light green
+                                    cellInput.style.backgroundColor = '#e6ffe6';
                                 }
                             }
                             const clueListItem = document.querySelector(`li[data-word-id="${wordId}"]`);
                             if (clueListItem) clueListItem.style.color = 'green';
                         }
                     } else {
-                        // Highlight word in red (optional, or clear input)
                         for (let i = 0; i < clue.length; i++) {
                             let r = clue.row + (clue.dir === 'D' ? i : 0);
                             let c = clue.col + (clue.dir === 'A' ? i : 0);
                             const cellInput = cells.find(input => parseInt(input.dataset.row) === r && parseInt(input.dataset.col) === c);
-                            if (cellInput && !wordsSolved[wordId]) { // Only if not already solved
-                                cellInput.style.backgroundColor = '#ffe6e6'; // Light red
+                            if (cellInput && !wordsSolved[wordId]) {
+                                cellInput.style.backgroundColor = '#ffe6e6';
                             }
                         }
                     }
@@ -211,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('Error checking answer:', error);
                 }
             }
-            alert(`Current Score: ${currentScore}`);
+            showModal('Current Score', `Your score is: ${currentScore}`);
         });
     }
 
@@ -236,15 +256,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const result = await response.json();
                 if (response.ok) {
-                    alert('Game Saved! Final Score: ' + currentScore + ', Time: ' + timeTaken + 's');
-                    // Optionally redirect to results page or show a summary
+                    await showModal('Game Saved!', `Final Score: ${currentScore}, Time: ${timeTaken}s`);
                     window.location.href = 'result.html';
                 } else {
-                    alert('Failed to save game: ' + result.error);
+                    showModal('Error', `Failed to save game: ${result.error}`);
                 }
             } catch (error) {
                 console.error('Error saving game:', error);
-                alert('An error occurred while saving the game.');
+                showModal('Error', 'An error occurred while saving the game.');
             }
         });
     }
@@ -252,13 +271,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle Show Answers button click
     const showAnswersBtn = document.getElementById('show-answers-btn');
     if (showAnswersBtn) {
-        showAnswersBtn.addEventListener('click', () => {
+        showAnswersBtn.addEventListener('click', async () => {
             if (!crosswordData || !crosswordData.grid) {
-                alert('No crossword data available to show answers.');
+                showModal('Error', 'No crossword data available to show answers.');
                 return;
             }
 
-            if (!confirm('Are you sure you want to reveal all answers?')) {
+            const confirmed = await showModal('Confirm', 'Are you sure you want to reveal all answers?', { showCancel: true });
+            if (!confirmed) {
                 return;
             }
 
